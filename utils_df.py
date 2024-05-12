@@ -79,8 +79,6 @@ def remove_to_classe(df):
         df.columns = df.iloc[classe_index]
         # Elimine as linhas até e incluindo o índice da 'Classe'
         df = df.iloc[classe_index + 1:]  # Comece do próximo após 'Classe'
-
-    print("aqui:",  df.columns)
     return df
 
 
@@ -89,6 +87,16 @@ def filtrar_fora_prazo(df, procedimento, prazo_maximo):
     df_filtrado = df[(df['classe'] == procedimento) & (df['dias_nf'] > prazo_maximo)]
     return df_filtrado
 
+
+def extract_last_date(df):
+    # Converter todos os nomes de coluna para minúsculas
+    df.columns = [col.lower() for col in df.columns]
+
+    # Extração da data assumindo que está sempre no formato 'dd/mm/yyyy' no final da string
+    # A coluna agora é acessada em minúsculas
+    df['data do último impulsionamento'] = df['último impulsionamento'].str.extract(r'(\d{2}/\d{2}/\d{4})')
+
+    return df
 
 def nf_pp_fora_prazo(df):
     # Filtra onde o procedimento é 'NF' e os dias estão acima do prazo máximo

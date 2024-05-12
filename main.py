@@ -72,7 +72,11 @@ with tab2:
                 st.header("Tabela Filtrada - extra fora do prazo - sem NF e PP 📊")
                 st.write("Foram excluidos da tabela enviada as NF e PP, uma vez que a pesquisa no emp já traz os extras sem impulsionamento!")
                 df_filtrado = exclude_specific_classes(df)
+                df_filtrado = extract_last_date(df)
                 st.dataframe(df_filtrado)
+                st.markdown("---")
+                grafico_procedimento_prazos_ultimo_impulsionamento(df_filtrado)
+                st.markdown("---")
                 download_table(df_filtrado)
 
             elif "judi com vista" in uploaded_file.name.lower():
@@ -81,6 +85,9 @@ with tab2:
                     "Foram excluidos da tabela enviada os Inquéritos Policiais e os processos com menos de 60 dias!")
                 df_filtrado = filter_df_by_criteria(df)
                 st.dataframe(df_filtrado)
+                st.markdown("---")
+                grafico_pizza_judiciais(df_filtrado)
+                st.markdown("---")
                 download_table(df_filtrado)
 
 
@@ -88,8 +95,9 @@ with tab2:
                 st.header("Tabela Filtrada NF | PP fora do prazo 📊")
                 df_filtrado = nf_pp_fora_prazo(df)
                 st.dataframe(df_filtrado)
+                st.markdown("---")
                 grafico_procedimento_prazos(df_filtrado)
-
+                st.markdown("---")
                 download_table(df_filtrado)
 
     if tipo_analise == "Análise de IP" and uploaded_file:
@@ -101,6 +109,7 @@ with tab2:
             df = normalize_columns(df)  # Normaliza os nomes das colunas
             df = remove_empty_rows(df)
             df = remove_empty_columns(df)
+            df = extract_last_date(df)
             dataframes.append(df)
 
         df_merged = pd.concat(dataframes, axis=0, join="outer", ignore_index=True)
@@ -121,7 +130,11 @@ with tab2:
             st.write(
                 "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
             st.dataframe(df_merged)
+            st.markdown("---")
             plot_instauracao_per_month(df_merged)
+            st.markdown("---")
+            plot_ultimo_impulsionamento_per_month(df_merged)
+            st.markdown("---")
             totalize_and_plot_by_subject(df_merged)
 
 
