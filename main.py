@@ -84,11 +84,12 @@ with tab2:
                 download_table(df_filtrado)
 
 
-
             elif "relatório extraj" in uploaded_file.name.lower():
                 st.header("Tabela Filtrada NF | PP fora do prazo 📊")
                 df_filtrado = nf_pp_fora_prazo(df)
                 st.dataframe(df_filtrado)
+                grafico_procedimento_prazos(df_filtrado)
+
                 download_table(df_filtrado)
 
     if tipo_analise == "Análise de IP" and uploaded_file:
