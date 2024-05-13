@@ -1,6 +1,7 @@
 import pandas as pd
-from icecream import ic
 import streamlit as st
+import io
+
 
 def extract(file_to_extract):
     if file_to_extract.name.split(".")[-1] == "xlsx":
@@ -125,10 +126,18 @@ def filter_df_by_criteria(df):
     return df
 
 
-def download_table(df):
-    csv = df.to_csv().encode("utf-8")
 
-    st.download_button(label="Download dados tratados como csv",
-                       data=csv,
-                       file_name="dados_tratados.csv",
-                       mime="text/csv")
+def download_table(df):
+    # Criar um buffer de bytes para segurar o arquivo Excel
+    output = io.BytesIO()
+    # Usar o Pandas para escrever o DataFrame para o buffer como um arquivo Excel
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    # Voltar para o início do buffer
+    output.seek(0)
+
+    # Criar o botão de download para o arquivo Excel
+    st.download_button(label="Download dados tratados como Excel",
+                       data=output,
+                       file_name="dados_tratados.xlsx",
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
