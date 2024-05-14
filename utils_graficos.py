@@ -111,7 +111,7 @@ def grafico_procedimento_prazos_ultimo_impulsionamento(df):
 
 
 def grafico_pizza_judiciais(df):
-    counts = df["Classe"].value_counts()
+    counts = df["classe"].value_counts()
 
     # Função para formatar o texto de autopct com porcentagem e valor absoluto
     def autopct_format(values):

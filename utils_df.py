@@ -3,9 +3,20 @@ import streamlit as st
 import io
 
 
+def convert_collum_date(df, colunas):
+    for coluna in colunas:
+        df[coluna] = pd.to_datetime(df[coluna], errors='coerce')
+
+        # Após a conversão, você pode então formatar essas colunas como desejar
+        df[coluna] = df[coluna].dt.strftime('%d-%m-%Y')
+
+    return df
+
+
 def apply_pipeline(dataframe, functions):
     for function in functions:
         dataframe = function(dataframe)
+
     return dataframe
 
 
@@ -125,18 +136,28 @@ def nf_pp_fora_prazo(df):
     return df_filtrado
 
 
-def gerar_dataframe_filtrado(df):
+def gerar_dataframe_filtrado(df, colunas):
     # Cria um novo dataframe selecionando as colunas desejadas
-    df_resultado = df[['classe', 'número', 'prazo legal']].copy()
+    df_resultado = df[colunas].copy()
 
     # Adiciona uma nova coluna 'Número de Ordem' que contém o índice + 1 (para começar de 1 em vez de 0)
     df_resultado['Número de Ordem'] = range(1, len(df_resultado) + 1)
 
+    colunas.insert(0, "Número de Ordem")
+
     # Reordena as colunas para colocar 'Número de Ordem' como a primeira coluna
-    colunas = ['Número de Ordem', 'classe', 'número', 'prazo legal']
     df_resultado = df_resultado[colunas]
 
     return df_resultado
+
+
+def title_case_column(df):
+    df.columns = df.columns.str.title()
+    return df
+
+
+
+
 
 
 def gerar_dataframe_filtrado_extra_nf(df):
@@ -163,16 +184,22 @@ def exclude_specific_classes(df):
 
 def filter_df_by_criteria(df):
     # Excluir entradas onde 'Classe' é 'Inquérito Policial'
-    df = df[df['Classe'] != 'Inquérito Policial']
+    df = df[df['classe'] != 'Inquérito Policial']
 
     # Converter 'Dias Andamento' para int antes de filtrar
     # Usar pd.to_numeric para conversão segura, convertendo erros em NaN (que serão filtrados fora)
-    df['Dias Andamento'] = pd.to_numeric(df['Dias Andamento'], errors='coerce')
+    df['dias andamento'] = pd.to_numeric(df['dias andamento'], errors='coerce')
 
     # Incluir apenas entradas onde 'Dias Andamento' é igual ou superior a 60
-    df = df[df['Dias Andamento'] >= 60]
+    df = df[df['dias andamento'] > 60]
 
     return df
+
+
+def filter_df_by_ip(df):
+    df = df[df['classe'] == "Inquérito Policial"]
+    return df
+
 
 
 def download_table(df):
