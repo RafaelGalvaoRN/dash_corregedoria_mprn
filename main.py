@@ -1,5 +1,3 @@
-import streamlit as st
-import pandas as pd
 from utils_df import *
 from utils_graficos import *
 from documentacao import textos_documentacao
@@ -8,82 +6,98 @@ st.title("APP - Corregedoria 🗂️ ")
 
 tab1, tab2 = st.tabs(["Documentação", "Aplicação"])
 
-
 with tab1:
     textos_documentacao()
 
-
-
 with tab2:
-
     st.caption("""
              Com este aplicativo, você será capaz de extrair, transformar e carregar os tipos de arquivo abaixo:
              \n1.xlsx         
              """)
 
-    tipo_analise = st.radio("Escolha um arquivo ou mais de um arquivo (analise de IP's", ["Análise Simples", "Análise de IP"])
+    uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True)
+
+    if uploaded_files:
+        seletor = uploaded_files[0].name.lower()
+
+        for processo in uploaded_files:
+            lista_dfs = [extract_normalize(processo) for processo in uploaded_files]
+
+        if "extra sem impulsionamento" in seletor:
+            lista_df_tratado = [remove_to_classe(processo) for processo in lista_dfs]
+            df_merged = pd.concat(lista_df_tratado, axis=0, join="outer", ignore_index=True)
 
 
-    uploaded_file = False
-    if tipo_analise == "Análise Simples":
-        uploaded_file = st.file_uploader("Escolha o arquivo", accept_multiple_files=False)
-
-    if tipo_analise == "Análise de IP":
-        uploaded_file = st.file_uploader("Escolha o arquivo", accept_multiple_files=True)
+        elif "judi com vista" in seletor:
+            lista_df_tratado = [remove_to_classe(processo) for processo in lista_dfs]
+            df_merged = pd.concat(lista_df_tratado, axis=0, join="outer", ignore_index=True)
 
 
-    if tipo_analise == "Análise Simples" and uploaded_file:
-        df = extract(uploaded_file)
+        elif "relatório extraj" in seletor:
+            lista_dfs = [extract_normalize(processo) for processo in uploaded_files]
 
-        df = normalize_column_types(df)
+            functions = [
+                remove_nan_columns,
+                remove_empty_columns,
+                rename_duplicate_columns,
+                remove_second_table_intervalos,
+                remove_to_classe,
+                remove_nan_columns,
+                normalize_columns
+            ]
 
-        df = normalize_columns(df)  # Normaliza os nomes das colunas
-        df = remove_empty_rows(df)
-        df = remove_empty_columns(df)
+            lista_df_tratado = [apply_pipeline(df, functions) for df in lista_dfs]
+            df_merged = pd.concat(lista_df_tratado, axis=0, join="outer", ignore_index=True)
 
-        if "extra sem impulsionamento" in uploaded_file.name.lower():
-            df = remove_to_classe(df)
 
-        elif "judi com vista" in uploaded_file.name.lower():
-            df = remove_to_classe(df)
+        elif "ips sem impulsionamento" in seletor:
 
-        elif "relatório extraj" in uploaded_file.name.lower():
-            df = remove_to_classe(df)
-            df = remove_second_table_intervalos(df)
-            df = rename_duplicate_columns(df)
-            df = remove_nan_columns(df)
+            functions = [
+                remove_to_classe,
+                normalize_column_types,
+                normalize_columns,
+                remove_empty_rows,
+                remove_empty_columns,
+                extract_last_date
+            ]
 
-        remove_duplicates = st.selectbox("Remover valores duplicados ?", ["Sim", "Não"])
-        remove_nulls = st.selectbox("Remover valores branco/nulos ?", ["Não", "Sim"])
-
-        if remove_duplicates == "Sim":
-            df.drop_duplicates(inplace=True)
-
-        if remove_nulls == "Sim":
-            df.dropna(how="all", inplace=True)
+            lista_df_tratado = [apply_pipeline(df, functions) for df in lista_dfs]
+            df_merged = pd.concat(lista_df_tratado, axis=0, join="outer", ignore_index=True)
 
         show_result = st.checkbox("Show Result", value=True)
 
         if show_result:
             st.header("Tabela Consolidada 📊")
-            st.dataframe(df)
+            st.dataframe(df_merged)
 
-            if "extra sem impulsionamento" in uploaded_file.name.lower():
+            if "extra sem impulsionamento" in seletor:
                 st.header("Tabela Filtrada - extra fora do prazo - sem NF e PP 📊")
-                st.write("Foram excluidos da tabela enviada as NF e PP, uma vez que a pesquisa no emp já traz os extras sem impulsionamento!")
-                df_filtrado = exclude_specific_classes(df)
-                df_filtrado = extract_last_date(df)
+
+                with st.expander("Clique aqui para mais informações sobre os critérios:"):
+                    st.markdown("""
+                      - **Exclusões:** Foram excluídos da tabela os itens 'NF' e 'PP', uma vez que a pesquisa no EMP já traz os extras sem impulsionamento.
+                      - **Inclusão:** Foi incluído o 'Número de Ordem'.
+                      - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número de Instauração', 'Prazo Legal'.
+                      """)
+
+                functions = [exclude_specific_classes, extract_last_date, gerar_dataframe_filtrado]
+                df_filtrado = apply_pipeline(df_merged, functions)
+
                 st.dataframe(df_filtrado)
                 st.markdown("---")
-                grafico_procedimento_prazos_ultimo_impulsionamento(df_filtrado)
+
+                functions = [exclude_specific_classes, extract_last_date]
+                df_filtrado_grafico = apply_pipeline(df_merged, functions)
+                grafico_procedimento_prazos_ultimo_impulsionamento(df_filtrado_grafico)
+
                 st.markdown("---")
                 download_table(df_filtrado)
 
-            elif "judi com vista" in uploaded_file.name.lower():
+            elif "judi com vista" in seletor:
                 st.header("Tabela Filtrada - Judiciais com mais de 60 dias 📊")
                 st.write(
                     "Foram excluidos da tabela enviada os Inquéritos Policiais e os processos com menos de 60 dias!")
-                df_filtrado = filter_df_by_criteria(df)
+                df_filtrado = filter_df_by_criteria(df_merged)
                 st.dataframe(df_filtrado)
                 st.markdown("---")
                 grafico_pizza_judiciais(df_filtrado)
@@ -91,62 +105,40 @@ with tab2:
                 download_table(df_filtrado)
 
 
-            elif "relatório extraj" in uploaded_file.name.lower():
+            elif "relatório extraj" in seletor:
                 st.header("Tabela Filtrada NF | PP fora do prazo 📊")
-                df_filtrado = nf_pp_fora_prazo(df)
+
+                with st.expander("Clique aqui para mais informações sobre os critérios:"):
+                    st.markdown("""                                    
+                                     - **Inclusão:** Foi incluído o 'Número de Ordem'.
+                                     - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número', 'Instauração', '30 dias', '120 dias', 'DENTRO/FORA', 'DIAS/FORA' .
+                                     """)
+
+                functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf]
+                df_filtrado = apply_pipeline(df_merged, functions)
                 st.dataframe(df_filtrado)
+
                 st.markdown("---")
-                grafico_procedimento_prazos(df_filtrado)
+
+                functions = [nf_pp_fora_prazo]
+                df_filtrado_grafico = apply_pipeline(df_merged, functions)
+
+                grafico_procedimento_prazos(df_filtrado_grafico)
+
                 st.markdown("---")
                 download_table(df_filtrado)
 
-    if tipo_analise == "Análise de IP" and uploaded_file:
-        dataframes = []
-        for ip in uploaded_file:
-            df = extract(ip)
-            df = remove_to_classe(df)
-            df = normalize_column_types(df)
-            df = normalize_columns(df)  # Normaliza os nomes das colunas
-            df = remove_empty_rows(df)
-            df = remove_empty_columns(df)
-            df = extract_last_date(df)
-            dataframes.append(df)
+            elif "ips sem impulsionamento" in seletor:
+                st.header("Tabela Consolidada 📊")
+                st.write(
+                    "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
+                st.dataframe(df_merged)
+                st.markdown("---")
+                plot_instauracao_per_month(df_merged)
+                st.markdown("---")
+                plot_ultimo_impulsionamento_per_month(df_merged)
+                st.markdown("---")
+                totalize_and_plot_by_subject(df_merged)
 
-        df_merged = pd.concat(dataframes, axis=0, join="outer", ignore_index=True)
-
-        remove_duplicates = st.selectbox("Remover valores duplicados ?", ["Sim", "Não"])
-        remove_nulls = st.selectbox("Remover valores branco/nulos ?", ["Não", "Sim"])
-
-        if remove_duplicates == "Sim":
-            df.drop_duplicates(inplace=True)
-
-        if remove_nulls == "Sim":
-            df.dropna(how="all", inplace=True)
-
-        show_result = st.checkbox("Show Result", value=True)
-
-        if show_result:
-            st.header("Tabela Consolidada 📊")
-            st.write(
-                "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
-            st.dataframe(df_merged)
-            st.markdown("---")
-            plot_instauracao_per_month(df_merged)
-            st.markdown("---")
-            plot_ultimo_impulsionamento_per_month(df_merged)
-            st.markdown("---")
-            totalize_and_plot_by_subject(df_merged)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                st.markdown("---")
+                download_table(df_merged)

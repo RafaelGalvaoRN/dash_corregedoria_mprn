@@ -3,6 +3,23 @@ import streamlit as st
 import io
 
 
+def apply_pipeline(dataframe, functions):
+    for function in functions:
+        dataframe = function(dataframe)
+    return dataframe
+
+
+def extract_normalize(uploaded_file):
+    df = extract(uploaded_file)
+
+    df = normalize_column_types(df)
+
+    df = normalize_columns(df)  # Normaliza os nomes das colunas
+    df = remove_empty_rows(df)
+    df = remove_empty_columns(df)
+    return df
+
+
 def extract(file_to_extract):
     if file_to_extract.name.split(".")[-1] == "xlsx":
         extracted_data = pd.read_excel(file_to_extract)
@@ -15,10 +32,12 @@ def normalize_columns(df):
     df.columns = df.columns.str.lower()  # Converte todas as colunas para minúsculas
     return df
 
+
 def remove_nan_columns(df):
     # Remover colunas cujos nomes começam com 'Unnamed'
     df = df.loc[:, ~df.columns.str.startswith('nan')]
     return df
+
 
 # Função para remover linhas completamente em branco ou linhas com apenas valores de filtro
 def remove_empty_rows(df):
@@ -32,7 +51,6 @@ def normalize_column_types(df):
     # Converte todas as colunas para string para evitar problemas de tipo
     for col in df.columns:
         df[col] = df[col].astype(str)
-
 
     return df
 
@@ -48,9 +66,10 @@ def rename_duplicate_columns(df):
     cols = pd.Series(df.columns)
     for dup in cols[cols.duplicated()].unique():
         # Gerar novos nomes para colunas duplicadas com numeração adequada
-        cols[cols == dup] = [f"{dup}_{i+1}" if i != 0 else dup for i in range(sum(cols == dup))]
+        cols[cols == dup] = [f"{dup}_{i + 1}" if i != 0 else dup for i in range(sum(cols == dup))]
     df.columns = cols
     return df
+
 
 def remove_second_table_intervalos(df):
     # Encontre o índice da linha onde "intervalos" está presente
@@ -99,10 +118,41 @@ def extract_last_date(df):
 
     return df
 
+
 def nf_pp_fora_prazo(df):
     # Filtra onde o procedimento é 'NF' e os dias estão acima do prazo máximo
-    df_filtrado = df[(df['Dentro /Fora'] == "F")]
+    df_filtrado = df[(df['dentro /fora'] == "F")]
     return df_filtrado
+
+
+def gerar_dataframe_filtrado(df):
+    # Cria um novo dataframe selecionando as colunas desejadas
+    df_resultado = df[['classe', 'número', 'prazo legal']].copy()
+
+    # Adiciona uma nova coluna 'Número de Ordem' que contém o índice + 1 (para começar de 1 em vez de 0)
+    df_resultado['Número de Ordem'] = range(1, len(df_resultado) + 1)
+
+    # Reordena as colunas para colocar 'Número de Ordem' como a primeira coluna
+    colunas = ['Número de Ordem', 'classe', 'número', 'prazo legal']
+    df_resultado = df_resultado[colunas]
+
+    return df_resultado
+
+
+def gerar_dataframe_filtrado_extra_nf(df):
+    # Cria um novo dataframe selecionando as colunas desejadas
+    df_resultado = df[['classe', 'número processo', 'instauração',
+                       '30 dias', '120 dias', 'dentro /fora', 'dias fora']].copy()
+
+    # Adiciona uma nova coluna 'Número de Ordem' que contém o índice + 1 (para começar de 1 em vez de 0)
+    df_resultado['Número de Ordem'] = range(1, len(df_resultado) + 1)
+
+    # Reordena as colunas para colocar 'Número de Ordem' como a primeira coluna
+    colunas = ['Número de Ordem', 'classe', 'número processo', 'instauração',
+               '30 dias', '120 dias', 'dentro /fora', 'dias fora']
+    df_resultado = df_resultado[colunas]
+
+    return df_resultado
 
 
 def exclude_specific_classes(df):
@@ -119,12 +169,10 @@ def filter_df_by_criteria(df):
     # Usar pd.to_numeric para conversão segura, convertendo erros em NaN (que serão filtrados fora)
     df['Dias Andamento'] = pd.to_numeric(df['Dias Andamento'], errors='coerce')
 
-
     # Incluir apenas entradas onde 'Dias Andamento' é igual ou superior a 60
     df = df[df['Dias Andamento'] >= 60]
 
     return df
-
 
 
 def download_table(df):

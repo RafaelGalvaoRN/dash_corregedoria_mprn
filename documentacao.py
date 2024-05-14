@@ -2,6 +2,12 @@ import streamlit as st
 
 
 def textos_documentacao():
+    st.markdown("---")
+
+    st.write("🚀 - 14/05/2024 - Versão 1.01. Possibilidade de múltiplos arquivos com concatenação e geração de tabela na forma pretendida pela Corregedoria.")
+
+
+    st.markdown("---")
 
     st.write(":sunglasses: Toda tabela é passível de ser baixada. Coloque o mouse em cima dela e espere o botão de download ser exibido no canto superior direito da mesma.")
 

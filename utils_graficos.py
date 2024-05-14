@@ -1,10 +1,7 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
 
 
 def plot_instauracao_per_month(df):
@@ -28,9 +25,6 @@ def plot_instauracao_per_month(df):
     st.pyplot(plt.gcf())
 
 
-
-
-
 def plot_ultimo_impulsionamento_per_month(df):
     # Converter a coluna 'Instauração' para datetime
     df['data do último impulsionamento'] = pd.to_datetime(df['data do último impulsionamento'], errors='coerce')
@@ -51,6 +45,7 @@ def plot_ultimo_impulsionamento_per_month(df):
     plt.tight_layout()
     st.pyplot(plt.gcf())
 
+
 def totalize_and_plot_by_subject(df):
     # Agrupar por 'Assunto' e contar as ocorrências
     subject_counts = df['assunto'].value_counts()
@@ -68,24 +63,20 @@ def totalize_and_plot_by_subject(df):
     st.pyplot(plt.gcf())
 
 
-
-
-
-
 def grafico_procedimento_prazos(df):
     # Definindo os intervalos de dias fora do prazo
     bins = [0, 30, 60, 90, 120, float('inf')]
     labels = ['0-30', '31-60', '61-90', '91-120', '121+']
 
     # Certifique-se de que a coluna 'Dias Fora' é numérica
-    df['Dias Fora'] = pd.to_numeric(df['Dias Fora'], errors='coerce')
+    df['dias fora'] = pd.to_numeric(df['dias fora'], errors='coerce')
 
     # Criando uma nova coluna com os intervalos
-    df['Intervalo Dias Fora'] = pd.cut(df['Dias Fora'], bins=bins, labels=labels, right=False)
+    df['Intervalo Dias Fora'] = pd.cut(df['dias fora'], bins=bins, labels=labels, right=False)
 
     # Criando o gráfico
     plt.figure(figsize=(10, 6))
-    sns.countplot(data=df, x='Intervalo Dias Fora', hue='Classe')
+    sns.countplot(data=df, x='Intervalo Dias Fora', hue='classe')
     plt.title('Distribuição de Processos por Dias Fora do Prazo e Classe')
     plt.xlabel('Dias Fora do Prazo')
     plt.ylabel('Número de Processos')
@@ -93,8 +84,6 @@ def grafico_procedimento_prazos(df):
 
     # Mostrando o gráfico no Streamlit
     st.pyplot(plt)
-
-
 
 
 def grafico_procedimento_prazos_ultimo_impulsionamento(df):
@@ -121,7 +110,6 @@ def grafico_procedimento_prazos_ultimo_impulsionamento(df):
     st.pyplot(plt)
 
 
-
 def grafico_pizza_judiciais(df):
     counts = df["Classe"].value_counts()
 
@@ -139,7 +127,4 @@ def grafico_pizza_judiciais(df):
     plt.title("Distribuição de Procedimentos Judiciais com mais de 60 dias por Classe")
     plt.axis('equal')  # Ensure that pie is drawn as a circle.
 
-
     st.pyplot(plt)
-
-
