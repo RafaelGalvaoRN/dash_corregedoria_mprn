@@ -148,7 +148,7 @@ with tab2:
                 st.write(
                     "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
 
-                colunas = ['número', 'assunto']
+                colunas = ['classe', 'número', 'assunto']
                 functions = [lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
                 df_filtrado = apply_pipeline(df_merged, functions)
                 st.dataframe(df_filtrado)
@@ -164,4 +164,4 @@ with tab2:
                 totalize_and_plot_by_subject(df_merged)
 
                 st.markdown("---")
-                download_table(df_merged)
+                download_table(df_filtrado)
