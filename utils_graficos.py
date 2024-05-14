@@ -5,14 +5,19 @@ import seaborn as sns
 
 
 def plot_instauracao_per_month(df):
+
     # Converter a coluna 'Instauração' para datetime
     df['instauração'] = pd.to_datetime(df['instauração'], errors='coerce')
+
 
     # Extrair ano e mês da coluna 'Instauração'
     df['YearMonth'] = df['instauração'].dt.to_period('M')
 
+
     # Agrupar por ano e mês, contando as ocorrências
     count_per_month = df.groupby('YearMonth').size()
+
+
 
     # Criar o gráfico de barras
     plt.figure(figsize=(10, 6))
@@ -22,28 +27,46 @@ def plot_instauracao_per_month(df):
     plt.ylabel('Quantidade de Processos')
     plt.xticks(rotation=45)
     plt.tight_layout()
+
+
+
+
+
     st.pyplot(plt.gcf())
 
 
 def plot_ultimo_impulsionamento_per_month(df):
-    # Converter a coluna 'Instauração' para datetime
-    df['data do último impulsionamento'] = pd.to_datetime(df['data do último impulsionamento'], errors='coerce')
+    try:
+        # Converter a coluna 'Instauração' para datetime
+        df['data do último impulsionamento'] = pd.to_datetime(df['data do último impulsionamento'], errors='coerce')
 
-    # Extrair ano e mês da coluna 'Instauração'
-    df['YearMonth'] = df['data do último impulsionamento'].dt.to_period('M')
+        # Extrair ano e mês da coluna 'Instauração'
+        df['YearMonth'] = df['data do último impulsionamento'].dt.to_period('M')
 
-    # Agrupar por ano e mês, contando as ocorrências
-    count_per_month = df.groupby('YearMonth').size()
+        # Agrupar por ano e mês, contando as ocorrências
+        count_per_month = df.groupby('YearMonth').size()
 
-    # Criar o gráfico de barras
-    plt.figure(figsize=(10, 6))
-    count_per_month.plot(kind='bar', color='skyblue')
-    plt.title('Quantidade de Processos Ativos por Ano / Mês do Último Impulsionamento')
-    plt.xlabel('Ano e Mês')
-    plt.ylabel('Quantidade de Processos')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(plt.gcf())
+        print("AQUIII ", count_per_month)
+
+        # Verificar se há dados para plotar
+        if count_per_month.empty:
+            st.warning("Dados insuficientes para plotar o gráfico.")
+            return  # Saída precoce se não houver dados para plotar
+
+        # Criar o gráfico de barras
+        plt.figure(figsize=(10, 6))
+        count_per_month.plot(kind='bar', color='skyblue')
+        plt.title('Quantidade de Processos Ativos por Ano / Mês do Último Impulsionamento')
+        plt.xlabel('Ano e Mês')
+        plt.ylabel('Quantidade de Processos')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+
+        # Mostrar o gráfico no Streamlit
+        st.pyplot(plt.gcf())
+
+    except Exception as e:
+        st.error(f"Ocorreu um erro ao tentar gerar o gráfico: {e}")
 
 
 def totalize_and_plot_by_subject(df):

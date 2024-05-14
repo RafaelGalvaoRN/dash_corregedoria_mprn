@@ -156,6 +156,9 @@ with tab2:
                 st.markdown("---")
                 plot_instauracao_per_month(df_merged)
                 st.markdown("---")
+
+
+
                 plot_ultimo_impulsionamento_per_month(df_merged)
                 st.markdown("---")
                 totalize_and_plot_by_subject(df_merged)
