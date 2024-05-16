@@ -1,10 +1,13 @@
 from utils_df import *
 from utils_graficos import *
 from documentacao import textos_documentacao
+from utils_pdf import *
+from relacao_promotorias import promotoria
 
 st.title("APP - Corregedoria 🗂️ ")
 
-tab1, tab2, tab3 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos", "Tratador Múltiplo e Geral"])
+tab1, tab2, tab3 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
+                                  "Tratador Múltiplo e Geral"])
 
 with tab1:
     textos_documentacao()
@@ -161,8 +164,6 @@ with tab2:
                 plot_instauracao_per_month(df_merged)
                 st.markdown("---")
 
-
-
                 plot_ultimo_impulsionamento_per_month(df_merged)
                 st.markdown("---")
                 totalize_and_plot_by_subject(df_merged)
@@ -170,13 +171,13 @@ with tab2:
                 st.markdown("---")
                 download_table(df_filtrado)
 
-
 with tab3:
     st.caption("""
                  Com este aplicativo, você será capaz de enviar múltiplos arquivos sendo eles tratados e disponibilizados zipados ao final através do botão Download  
                  """)
 
 
+    promotoria_selecionada = st.selectbox("Escolha uma promotoria", promotoria)
 
     uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab3.1")
 
@@ -188,19 +189,32 @@ with tab3:
 
             nome_arquivo = arquivo.name.lower()
             seletor = arquivo.name.lower()
-
             df = extract_normalize(arquivo)
-
 
             if "extra sem impulsionamento" in seletor:
                 lista_df_tratado = remove_to_classe(df)
                 df_merged = lista_df_tratado
 
+                colunas = ["classe", "número", "prazo legal"]
+                functions = [exclude_specific_classes, extract_last_date,
+                             lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
 
             elif "judi com vista" in seletor:
                 lista_df_tratado = remove_to_classe(df)
                 df_merged = lista_df_tratado
 
+                colunas = ['procedimento', 'classe', 'assunto', 'data registro', 'dias andamento']
+                functions = [normalize_columns, filter_df_by_criteria, lambda df: gerar_dataframe_filtrado(df, colunas),
+                             title_case_column]
+
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
 
             elif "relatório extraj" in seletor:
 
@@ -217,6 +231,15 @@ with tab3:
                 lista_df_tratado = apply_pipeline(df, functions)
                 df_merged = lista_df_tratado
 
+                colunas_corrigir_formato = ['instauração', '30 dias', '120 dias']
+
+                functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf,
+                             lambda df: convert_collum_date(df, colunas_corrigir_formato), title_case_column]
+
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
 
             elif "ips sem impulsionamento" in seletor:
 
@@ -233,63 +256,6 @@ with tab3:
                 lista_df_tratado = apply_pipeline(df, functions)
                 df_merged = lista_df_tratado
 
-            st.write("Inicializando tratamento do arquivo", nome_arquivo)
-
-            if "extra sem impulsionamento" in seletor:
-
-
-
-                colunas = ["classe", "número", "prazo legal"]
-                functions = [exclude_specific_classes, extract_last_date,
-                             lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
-                df_filtrado = apply_pipeline(df_merged, functions)
-
-                dfs.append(df_filtrado)
-                nomes.append(f"{nome_arquivo}_tratado")
-
-
-
-
-
-            elif "judi com vista" in seletor:
-
-
-                colunas = ['procedimento', 'classe', 'assunto', 'data registro', 'dias andamento']
-                functions = [normalize_columns, filter_df_by_criteria, lambda df: gerar_dataframe_filtrado(df, colunas),
-                             title_case_column]
-
-                df_filtrado = apply_pipeline(df_merged, functions)
-
-                dfs.append(df_filtrado)
-                nomes.append(f"{nome_arquivo}_tratado")
-
-
-
-
-
-
-            elif "relatório extraj" in seletor:
-
-
-
-                colunas_corrigir_formato = ['instauração', '30 dias', '120 dias']
-
-                functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf,
-                             lambda df: convert_collum_date(df, colunas_corrigir_formato), title_case_column]
-
-                df_filtrado = apply_pipeline(df_merged, functions)
-
-                dfs.append(df_filtrado)
-                nomes.append(f"{nome_arquivo}_tratado")
-
-
-
-
-
-            elif "ips sem impulsionamento" in seletor:
-
-
-
                 colunas = ['classe', 'número', 'assunto']
                 functions = [lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
                 df_filtrado = apply_pipeline(df_merged, functions)
@@ -297,7 +263,10 @@ with tab3:
                 dfs.append(df_filtrado)
                 nomes.append(f"{nome_arquivo}_tratado")
 
+            st.write("Finalizado tratamento do arquivo", nome_arquivo)
+
+        pdf_path = gerador_relatorio_pdf(dfs, nomes, promotoria=promotoria_selecionada)
+        compactar_e_download(dfs, nomes, pdf_path)
 
 
-        compactar_e_download(dfs, nomes)
 

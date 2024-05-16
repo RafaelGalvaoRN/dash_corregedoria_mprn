@@ -166,7 +166,7 @@ def select_nf_pp_data_in_df(df, column_index=0):
     #ecxclui linhas dos filtros NF e PP
     filtered_df.dropna(subset=['Número Processo'], inplace=True)
 
-    st.write(filtered_df)
+
 
     return filtered_df
 
@@ -318,13 +318,17 @@ def gerar_arquivos_excel(dfs, nomes):
 
 
 
-def compactar_e_download(dfs, nomes):
+
+
+
+
+def compactar_e_download(dfs, nomes, pdf_path):
     # Criar diretório temporário para guardar os arquivos Excel
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "arquivos_tratados.zip")
 
     # Criar arquivos Excel dentro do diretório temporário
-    paths = []
+    paths = [pdf_path]
     for df, nome in zip(dfs, nomes):
         path = os.path.join(temp_dir, f"{nome}.xlsx")
         df.to_excel(path, index=False)

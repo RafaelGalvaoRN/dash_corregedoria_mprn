@@ -1,0 +1,1 @@
+promotoria = ["1º PmJ de Canguaretama", "1º PmJ Nísia Floresta", "2º PmJ Nísia Floresta"]
