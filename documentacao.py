@@ -2,6 +2,18 @@ import streamlit as st
 
 
 def textos_documentacao():
+
+
+    st.markdown("---")
+
+    st.write("😎 - 15/05/2024 - Inclusão da aba 'Tratador Múltiplo e Geral'")
+
+    st.write("😎 - 15/05/2024 - Melhoria do filtro na tabela 'Extra sem impulsionamento' que passa a excluir PPs e NFs")
+
+
+    st.write("😎 - 15/05/2024 - Implementação da pesquisa de NF e PP na mesma tabela, apesar de estarem em seções diferentes ")
+
+
     st.markdown("---")
 
     st.write("🚀 - 14/05/2024 - Versão 1.01. Possibilidade de múltiplos arquivos com concatenação e geração de tabela na forma pretendida pela Corregedoria.")

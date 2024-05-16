@@ -4,18 +4,22 @@ from documentacao import textos_documentacao
 
 st.title("APP - Corregedoria 🗂️ ")
 
-tab1, tab2 = st.tabs(["Documentação", "Aplicação"])
+tab1, tab2, tab3 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos", "Tratador Múltiplo e Geral"])
 
 with tab1:
     textos_documentacao()
 
 with tab2:
     st.caption("""
-             Com este aplicativo, você será capaz de extrair, transformar e carregar os tipos de arquivo abaixo:
-             \n1.xlsx         
+             Com este aplicativo, você será capaz de extrair, transformar e carregar os arquivos com os nomes abaixo:
+             \nExtra sem impulsionamento.xlsx
+             \nIPs sem Impulsionamento.xlsx
+             \nJudi com vista.xlsx
+             \nRelatório FinalJ - NF - PP.xlsx
+             \n Caso enviado mais de um arquivo do mesmo tipo, as tabelas serão agrupadas                      
              """)
 
-    uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab2")
 
     if uploaded_files:
         seletor = uploaded_files[0].name.lower()
@@ -40,7 +44,7 @@ with tab2:
                 remove_nan_columns,
                 remove_empty_columns,
                 rename_duplicate_columns,
-                remove_second_table_intervalos,
+                select_nf_pp_data_in_df,
                 remove_to_classe,
                 remove_nan_columns,
                 normalize_columns
@@ -165,3 +169,135 @@ with tab2:
 
                 st.markdown("---")
                 download_table(df_filtrado)
+
+
+with tab3:
+    st.caption("""
+                 Com este aplicativo, você será capaz de enviar múltiplos arquivos sendo eles tratados e disponibilizados zipados ao final através do botão Download  
+                 """)
+
+
+
+    uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab3.1")
+
+    if uploaded_files:
+        dfs = []
+        nomes = []
+
+        for arquivo in uploaded_files:
+
+            nome_arquivo = arquivo.name.lower()
+            seletor = arquivo.name.lower()
+
+            df = extract_normalize(arquivo)
+
+
+            if "extra sem impulsionamento" in seletor:
+                lista_df_tratado = remove_to_classe(df)
+                df_merged = lista_df_tratado
+
+
+            elif "judi com vista" in seletor:
+                lista_df_tratado = remove_to_classe(df)
+                df_merged = lista_df_tratado
+
+
+            elif "relatório extraj" in seletor:
+
+                functions = [
+                    remove_nan_columns,
+                    remove_empty_columns,
+                    rename_duplicate_columns,
+                    select_nf_pp_data_in_df,
+                    remove_to_classe,
+                    remove_nan_columns,
+                    normalize_columns
+                ]
+
+                lista_df_tratado = apply_pipeline(df, functions)
+                df_merged = lista_df_tratado
+
+
+            elif "ips sem impulsionamento" in seletor:
+
+                functions = [
+                    remove_to_classe,
+                    normalize_column_types,
+                    normalize_columns,
+                    remove_empty_rows,
+                    remove_empty_columns,
+                    extract_last_date,
+                    filter_df_by_ip
+                ]
+
+                lista_df_tratado = apply_pipeline(df, functions)
+                df_merged = lista_df_tratado
+
+            st.write("Inicializando tratamento do arquivo", nome_arquivo)
+
+            if "extra sem impulsionamento" in seletor:
+
+
+
+                colunas = ["classe", "número", "prazo legal"]
+                functions = [exclude_specific_classes, extract_last_date,
+                             lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
+
+
+
+
+
+            elif "judi com vista" in seletor:
+
+
+                colunas = ['procedimento', 'classe', 'assunto', 'data registro', 'dias andamento']
+                functions = [normalize_columns, filter_df_by_criteria, lambda df: gerar_dataframe_filtrado(df, colunas),
+                             title_case_column]
+
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
+
+
+
+
+
+
+            elif "relatório extraj" in seletor:
+
+
+
+                colunas_corrigir_formato = ['instauração', '30 dias', '120 dias']
+
+                functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf,
+                             lambda df: convert_collum_date(df, colunas_corrigir_formato), title_case_column]
+
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
+
+
+
+
+
+            elif "ips sem impulsionamento" in seletor:
+
+
+
+                colunas = ['classe', 'número', 'assunto']
+                functions = [lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
+                df_filtrado = apply_pipeline(df_merged, functions)
+
+                dfs.append(df_filtrado)
+                nomes.append(f"{nome_arquivo}_tratado")
+
+
+
+        compactar_e_download(dfs, nomes)
+

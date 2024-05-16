@@ -1,6 +1,9 @@
 import pandas as pd
-import streamlit as st
 import io
+import streamlit as st
+from zipfile import ZipFile
+import os
+import tempfile
 
 
 def convert_collum_date(df, colunas):
@@ -97,6 +100,77 @@ def remove_second_table_intervalos(df):
     return df
 
 
+def process_sections(df):
+    # Identificar todas as linhas onde qualquer célula contém a palavra "Classe"
+    header_indices = df.index[df.apply(lambda row: row.str.contains('Classe', na=False).any(), axis=1)].tolist()
+
+    # Verificar se há pelo menos um cabeçalho com 'Classe'
+    if not header_indices:
+        raise ValueError("Não foi encontrada nenhuma linha de cabeçalho com 'Classe'. Verifique o DataFrame.")
+
+    # Função para extrair dados até a primeira linha em branco após o cabeçalho
+    def extract_section(df, start_index):
+        # Encontrar o índice da primeira linha completamente nula após o cabeçalho
+        empty_rows = df[start_index:].isnull().all(axis=1)
+        if empty_rows.any():
+            end_index = df[start_index:].index[empty_rows][0]
+        else:
+            end_index = df.shape[0]  # Se não houver linha em branco, usar o final do DataFrame
+        return df.iloc[start_index:end_index]
+
+    # Processar seções com base no número de cabeçalhos encontrados
+    if len(header_indices) == 1:
+        # Se houver apenas um cabeçalho 'Classe'
+        section_df = extract_section(df, header_indices[0] + 1)
+        return section_df
+    else:
+        # Se houver mais de um cabeçalho 'Classe'
+        combined_df = pd.DataFrame()
+        for i in header_indices:
+            section_df = extract_section(df, i + 1)
+            combined_df = pd.concat([combined_df, section_df], ignore_index=True)
+
+        print(combined_df.head())
+        print(combined_df.tail())
+        return combined_df
+
+
+def select_nf_pp_data_in_df(df, column_index=0):
+    # Lista de inícios de tipos de classe válidos
+    valid_starts = ['Notícia de Fato', 'Procedimento Preparatório']
+
+    # Filtrar o DataFrame pela coluna especificada, mantendo linhas cujo valor inicie com um dos prefixos válidos
+    filtered_df = df[
+        df.iloc[:, column_index].apply(lambda x: any(x.startswith(prefix) for prefix in valid_starts if pd.notna(x)))]
+
+
+    #exclue algumas colunas, em branco
+    filtered_df.drop(filtered_df.columns[[1, 2, 4, 6,
+                                          8, 9, 11, 12, 15, 16, 18]], axis=1, inplace=True)
+
+
+
+    #insere nome das colunas
+    column_names = [
+        "Classe", "Número Processo", "Instauração", "Última",
+        "30 Dias", "120 Dias", "Obervação", "dentro /fora", "dias fora"
+    ]
+
+    filtered_df.columns = column_names
+
+
+
+    # Converter todas as instâncias da string "nan" para verdadeiro NaN
+    filtered_df['Número Processo'] = filtered_df['Número Processo'].replace('nan', pd.NA)
+
+    #ecxclui linhas dos filtros NF e PP
+    filtered_df.dropna(subset=['Número Processo'], inplace=True)
+
+    st.write(filtered_df)
+
+    return filtered_df
+
+
 def remove_to_classe(df):
     classe_index = None
     for idx, row in df.iterrows():
@@ -177,8 +251,18 @@ def gerar_dataframe_filtrado_extra_nf(df):
 
 
 def exclude_specific_classes(df):
+    classes_to_exclude = [
+        'Notícia de Fato',
+        'Procedimentos Preparatórios',
+        'Procedimento Preparatório',
+        'Procedimento Preparatorio',
+        'Procedimentos Preparatorios',
+        'Procedimento Preparatorio'
+    ]
+
+
     # Filtra o DataFrame para excluir linhas onde 'Classe' é 'Notícia de Fato' ou 'Procedimentos Preparatórios'
-    df_filtered = df[~df['Classe'].isin(['Notícia de Fato', 'Procedimentos Preparatórios'])]
+    df_filtered = df[~df['Classe'].isin(classes_to_exclude)]
     return df_filtered
 
 
@@ -214,5 +298,83 @@ def download_table(df):
     # Criar o botão de download para o arquivo Excel
     st.download_button(label="Download dados tratados como Excel",
                        data=output,
-                       file_name="dados_tratados.xlsx",
+                       file_name=f"dados_tratados.xlsx",
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+
+
+def gerar_arquivos_excel(dfs, nomes):
+    """Gera arquivos Excel temporários a partir de uma lista de DataFrames."""
+    paths = []
+    for df, nome in zip(dfs, nomes):
+        temp_dir = tempfile.mkdtemp()
+        path = os.path.join(temp_dir, f"{nome}.xlsx")
+        df.to_excel(path, index=False)
+        paths.append(path)
+    return paths
+
+
+
+
+
+def compactar_e_download(dfs, nomes):
+    # Criar diretório temporário para guardar os arquivos Excel
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, "arquivos_tratados.zip")
+
+    # Criar arquivos Excel dentro do diretório temporário
+    paths = []
+    for df, nome in zip(dfs, nomes):
+        path = os.path.join(temp_dir, f"{nome}.xlsx")
+        df.to_excel(path, index=False)
+        paths.append(path)
+
+    # Compactar todos os arquivos Excel em um arquivo ZIP
+    with ZipFile(zip_path, 'w') as zipf:
+        for path in paths:
+            zipf.write(path, os.path.basename(path))
+
+    # Oferecer o arquivo ZIP para download
+    with open(zip_path, "rb") as fp:
+        st.download_button(
+            label="Download Todos os Arquivos",
+            data=fp,
+            file_name="arquivos_tratados.zip",
+            mime="application/zip"
+        )
+
+    # Limpar os arquivos temporários
+    try:
+        for path in paths:
+            os.remove(path)
+        os.rmdir(temp_dir)
+    except OSError as e:
+        print(f"Erro ao tentar remover o diretório temporário: {e}")
+
+
+
+
+def criar_zip_arquivos(paths):
+    """Cria um arquivo ZIP com vários arquivos Excel."""
+    zip_path = os.path.join(tempfile.gettempdir(), "dados_tratados.zip")
+    with ZipFile(zip_path, 'w') as zipf:
+        for file in paths:
+            zipf.write(file, os.path.basename(file))
+    return zip_path
+
+
+def download_table_direto(df, nome_arquivo):
+    # Criar um buffer de bytes para segurar o arquivo Excel
+    output = io.BytesIO()
+    # Usar o Pandas para escrever o DataFrame para o buffer como um arquivo Excel
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    # Voltar para o início do buffer
+    output.seek(0)
+
+    # Criar o botão de download para o arquivo Excel
+    st.download_button(label="Download dados tratados como Excel",
+                       data=output,
+                       file_name=f"{nome_arquivo}_dados_tratados.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
