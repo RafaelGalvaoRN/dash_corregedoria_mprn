@@ -4,6 +4,8 @@ import streamlit as st
 def textos_documentacao():
 
 
+    st.write("😎 - 16/05/2024 - Inclusão da confecção de relatório em PDF na aba 'Tratador Múltiplo e Geral'")
+
     st.markdown("---")
 
     st.write("😎 - 15/05/2024 - Inclusão da aba 'Tratador Múltiplo e Geral'")

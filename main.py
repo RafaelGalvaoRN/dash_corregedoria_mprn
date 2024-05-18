@@ -179,6 +179,18 @@ with tab3:
 
     promotoria_selecionada = st.selectbox("Escolha uma promotoria", promotoria)
 
+    col1, col2 = st.columns(2)
+
+    with col1:
+        qtd_acervo_extra = st.number_input("Quantidade de acervo extrajudicial", min_value=0, step=1,
+                                           help="Quantidade acervo judicial para cálculo de produtividade")
+
+    with col2:
+        qtd_acervo_jud = st.number_input("Quantidade de acervo judicial", min_value=0, step=1,
+                                         help="Quantidade acervo extrajudicial para cálculo de produtividade")
+
+
+
     uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab3.1")
 
     if uploaded_files:
@@ -265,7 +277,12 @@ with tab3:
 
             st.write("Finalizado tratamento do arquivo", nome_arquivo)
 
-        pdf_path = gerador_relatorio_pdf(dfs, nomes, promotoria=promotoria_selecionada)
+        pdf_path = gerador_relatorio_pdf(dfs,
+                                         nomes,
+                                         promotoria=promotoria_selecionada,
+                                         qtd_acervo_jud= qtd_acervo_jud,
+                                         qtd_acervo_extra=qtd_acervo_extra)
+
         compactar_e_download(dfs, nomes, pdf_path)
 
 

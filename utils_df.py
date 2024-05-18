@@ -143,14 +143,11 @@ def select_nf_pp_data_in_df(df, column_index=0):
     filtered_df = df[
         df.iloc[:, column_index].apply(lambda x: any(x.startswith(prefix) for prefix in valid_starts if pd.notna(x)))]
 
-
-    #exclue algumas colunas, em branco
+    # exclue algumas colunas, em branco
     filtered_df.drop(filtered_df.columns[[1, 2, 4, 6,
                                           8, 9, 11, 12, 15, 16, 18]], axis=1, inplace=True)
 
-
-
-    #insere nome das colunas
+    # insere nome das colunas
     column_names = [
         "Classe", "Número Processo", "Instauração", "Última",
         "30 Dias", "120 Dias", "Obervação", "dentro /fora", "dias fora"
@@ -158,15 +155,11 @@ def select_nf_pp_data_in_df(df, column_index=0):
 
     filtered_df.columns = column_names
 
-
-
     # Converter todas as instâncias da string "nan" para verdadeiro NaN
     filtered_df['Número Processo'] = filtered_df['Número Processo'].replace('nan', pd.NA)
 
-    #ecxclui linhas dos filtros NF e PP
+    # ecxclui linhas dos filtros NF e PP
     filtered_df.dropna(subset=['Número Processo'], inplace=True)
-
-
 
     return filtered_df
 
@@ -230,10 +223,6 @@ def title_case_column(df):
     return df
 
 
-
-
-
-
 def gerar_dataframe_filtrado_extra_nf(df):
     # Cria um novo dataframe selecionando as colunas desejadas
     df_resultado = df[['classe', 'número processo', 'instauração',
@@ -260,7 +249,6 @@ def exclude_specific_classes(df):
         'Procedimento Preparatorio'
     ]
 
-
     # Filtra o DataFrame para excluir linhas onde 'Classe' é 'Notícia de Fato' ou 'Procedimentos Preparatórios'
     df_filtered = df[~df['Classe'].isin(classes_to_exclude)]
     return df_filtered
@@ -285,7 +273,6 @@ def filter_df_by_ip(df):
     return df
 
 
-
 def download_table(df):
     # Criar um buffer de bytes para segurar o arquivo Excel
     output = io.BytesIO()
@@ -302,8 +289,6 @@ def download_table(df):
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
-
-
 def gerar_arquivos_excel(dfs, nomes):
     """Gera arquivos Excel temporários a partir de uma lista de DataFrames."""
     paths = []
@@ -315,11 +300,14 @@ def gerar_arquivos_excel(dfs, nomes):
     return paths
 
 
+def read_excel(file_path: str) -> list:
+    df = pd.read_excel(file_path)
+
+    lista = df.iloc[:,1].tolist()
 
 
 
-
-
+    print(lista[2:])
 
 
 def compactar_e_download(dfs, nomes, pdf_path):
@@ -357,8 +345,6 @@ def compactar_e_download(dfs, nomes, pdf_path):
         print(f"Erro ao tentar remover o diretório temporário: {e}")
 
 
-
-
 def criar_zip_arquivos(paths):
     """Cria um arquivo ZIP com vários arquivos Excel."""
     zip_path = os.path.join(tempfile.gettempdir(), "dados_tratados.zip")
@@ -382,3 +368,9 @@ def download_table_direto(df, nome_arquivo):
                        data=output,
                        file_name=f"{nome_arquivo}_dados_tratados.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+
+file_path = r"C:\Users\User\Downloads\Nomes PmJS SAV.xlsx"
+
+read_excel(file_path)
