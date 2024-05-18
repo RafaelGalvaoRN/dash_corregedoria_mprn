@@ -370,7 +370,3 @@ def download_table_direto(df, nome_arquivo):
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
-
-file_path = r"C:\Users\User\Downloads\Nomes PmJS SAV.xlsx"
-
-read_excel(file_path)
