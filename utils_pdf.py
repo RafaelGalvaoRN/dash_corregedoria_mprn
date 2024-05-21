@@ -134,7 +134,6 @@ def gerador_relatorio_pdf(dfs, df_names, promotoria="teste", filename="relatorio
         elements.append(Spacer(1, 0.5 * inch))  # Add space between tables
 
     if passivo_extra > 0:
-
         percentual_atraso = calcula_indice_percentual_atrado(qtd_acervo_extra, passivo_extra)
 
 
@@ -177,7 +176,7 @@ def gerador_relatorio_pdf(dfs, df_names, promotoria="teste", filename="relatorio
         elements.append(Spacer(1, 0.5 * inch))  # Adiciona espaço entre as tabelas
 
     if passivo_jud > 0:
-        percentual_atraso = calcula_indice_percentual_atrado(qtd_acervo_extra, passivo_jud)
+        percentual_atraso = calcula_indice_percentual_atrado(qtd_acervo_jud, passivo_jud)
 
         # CONSTRUÇAO DA COLUNA DE PERCENTUAL
         # Adicionar espaço após o cabeçalho
