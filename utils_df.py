@@ -130,8 +130,6 @@ def process_sections(df):
             section_df = extract_section(df, i + 1)
             combined_df = pd.concat([combined_df, section_df], ignore_index=True)
 
-        print(combined_df.head())
-        print(combined_df.tail())
         return combined_df
 
 
@@ -305,9 +303,11 @@ def read_excel(file_path: str) -> list:
 
     lista = df.iloc[:,1].tolist()
 
+    return lista
 
 
-    print(lista[2:])
+
+
 
 
 def compactar_e_download(dfs, nomes, pdf_path):

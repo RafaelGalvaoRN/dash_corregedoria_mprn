@@ -255,6 +255,8 @@ with tab3:
 
             elif "ips sem impulsionamento" in seletor:
 
+
+
                 functions = [
                     remove_to_classe,
                     normalize_column_types,
@@ -276,6 +278,7 @@ with tab3:
                 nomes.append(f"{nome_arquivo}_tratado")
 
             st.write("Finalizado tratamento do arquivo", nome_arquivo)
+
 
         pdf_path = gerador_relatorio_pdf(dfs,
                                          nomes,
