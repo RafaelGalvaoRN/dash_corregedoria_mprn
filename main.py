@@ -3,11 +3,12 @@ from utils_graficos import *
 from documentacao import textos_documentacao
 from utils_pdf import *
 from relacao_promotorias import promotoria
+from utils_cate import *
 
 st.title("APP - Corregedoria 🗂️ ")
 
-tab1, tab2, tab3 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
-                                  "Tratador Múltiplo e Geral"])
+tab1, tab2, tab3, tab4 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
+                                  "Tratador Múltiplo e Geral", "Relatório Cate"])
 
 with tab1:
     textos_documentacao()
@@ -287,6 +288,36 @@ with tab3:
                                          qtd_acervo_extra=qtd_acervo_extra)
 
         compactar_e_download(dfs, nomes, pdf_path)
+
+with tab4:
+    arquivos = cate_extract()
+    if arquivos:
+        df_unificado = cate_concatena_xlsx(arquivos)
+        if df_unificado is not None:
+            promotorias = cate_get_promotoria(df_unificado)
+            promotoria_selecionada = st.selectbox("Selecione a Promotoria", promotorias)
+            st.write(f"Promotoria selecionada: {promotoria_selecionada}")
+
+            if promotoria_selecionada:
+                df_filtrado = cate_filtra_por_promotoria(df_unificado, promotoria_selecionada)
+                st.write(f"DataFrame filtrado pela promotoria {promotoria_selecionada}:")
+                st.write(df_filtrado)
+
+
+                df_excel = cate_to_excel(df_filtrado)
+                st.download_button(label="Baixar Excel", data=df_excel, file_name='df_filtrado.xlsx',
+                                   mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+
+
+
+
+
+
+
+
+
 
 
 

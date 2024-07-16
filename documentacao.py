@@ -3,6 +3,8 @@ import streamlit as st
 
 def textos_documentacao():
 
+    st.write("😎 - 16/07/2024 - Inclusão da ABA 'Relatório CATE' que visa tratar concatenar tabelas do CATE e filtrar por promotoria")
+
 
     st.write("😎 - 16/05/2024 - Inclusão da confecção de relatório em PDF na aba 'Tratador Múltiplo e Geral'")
 
