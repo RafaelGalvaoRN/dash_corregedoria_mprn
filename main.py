@@ -293,6 +293,9 @@ with tab4:
     arquivos = cate_extract()
     if arquivos:
         df_unificado = cate_concatena_xlsx(arquivos)
+        qtd = st.number_input("Quantidade de Promotorias a serem disponibilizadas no gráfico", step=1, min_value=1)
+        plotar_solicitacoes_por_unidade(df_unificado, qtd)
+
         if df_unificado is not None:
             promotorias = cate_get_promotoria(df_unificado)
             promotoria_selecionada = st.selectbox("Selecione a Promotoria", promotorias)
@@ -301,7 +304,12 @@ with tab4:
             if promotoria_selecionada:
                 df_filtrado = cate_filtra_por_promotoria(df_unificado, promotoria_selecionada)
                 st.write(f"DataFrame filtrado pela promotoria {promotoria_selecionada}:")
+
+                df_filtrado = converter_colunas_para_datetime(df_filtrado, ["Data Solicitação", "Data Conclusão"])
+
                 st.write(df_filtrado)
+
+
 
 
                 df_excel = cate_to_excel(df_filtrado)
