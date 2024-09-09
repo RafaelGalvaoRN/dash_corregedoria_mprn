@@ -1,3 +1,5 @@
+import pandas as pd
+
 from utils_df import *
 from utils_graficos import *
 from documentacao import textos_documentacao
@@ -389,9 +391,10 @@ with tab5:
                 # st.write("ficha_11_bizagi")
                 # st.write(ficha_11_bizagi)
 
-
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha_11",
+                campos_preencher.append((pdf_filename, "Bizagi - Ficha 11",
                                          f"fls. {ficha_11_bizagi['pag_inicial']}-{ficha_11_bizagi['pag_final']}"))
+
+
 
                 ficha_12_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 12 - cursos oficiais diversos"),
@@ -446,10 +449,105 @@ with tab5:
                 # st.write("certidao_dcog")
                 # st.write(certidao_dcog)
 
-
-
                 campos_preencher.append((pdf_filename, "Certidão da Diretoria da Corregedoria-Geral",
                                          f"fls. {certidao_dcog['pag_inicial']}-{certidao_dcog['pag_final']}"))
+
+    dados_fixos = {
+        'Item': ['1.1.1 Resolutividade (Produtividade e impacto social)',
+                 '1.1.2 Presteza',
+                 '1.1.3 Pronto Antedimento',
+                 '1.1.4 Eficiência',
+                 '1.1.5 Organização e Desempenho das Funções',
+                 '1.2.1 Qualidade Técnica',
+                 '1.2.2 Segurança',
+                 'Participação em Mutirões e/ou Sessões do Júri',
+                 '3.1.1 Cursos de Formação Continuada',
+                 '3.1.2 Cursos Oficiais Diversos dos de Formação Continuada e Cursos Reconhecidos de Aperfeiçoamento',
+                 'a) Doutorado (pós-graduação stricto sensu) reconhecido pelo MEC (sem o afastamento previsto no art. 197, inciso III, da Lei Complementar Estadual no 141/1996 c/c Resolução no 004/2008-CSMP).',
+                 'b) Mestrado (pós-graduação stricto sensu) reconhecido pelo MEC (sem o afastamento previsto no art. 197, inciso III, da Lei Complementar Estadual no 141/1996 c/c Resolução no 004/2008-CSMP).',
+                 'c) Curso de especialização (pós-graduação lato sensu) reconhecido pelo MEC (sem o afastamento',
+                 '3.3.1. Publicações Acadêmicas',
+                 '---',
+                 ],
+
+        # 'Informações': [
+        #     'Produtividade: último Relatório de Correição ({{Último Relatório de Correição}}) e Comparativo atualizado ({{Comparativo de Produtividade}}) \n Impacto Social: Bizagi – Ficha 15 ({{Bizagi - Ficha 15}}), Último Relatório de Correição ({{Último Relatório de Correição}}) e drive CGMP_RESULTADOS (G:\ Drives compartilhados\ CGMP_RESULTADOS)',
+        #     'Fichas 15 e 16 do Bizagi ({{Bizagi - Ficha 15 e 16}}), Último Relatório de Correição ({{Último Relatório de Correição}}) e Certidão DCOG {{Certidão da Diretoria da Corregedoria-Geral}}',
+        #     'Certidão da DCOG ({{Certidão da Diretoria da Corregedoria-Geral}})',
+        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 6 ({{Bizagi - Ficha 6}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 11 ({{Bizagi - Ficha 11}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 12 ({{Bizagi - Ficha 12}}) e 13 ({{Bizagi - Ficha 13}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'Ficha 8 ({{Bizagi - Ficha 8}}) EXTRATO_MERECIMENTO BIZAGI',
+        #     'PENDENTE DE SABER ONDE FICA',
+        # ],
+
+        'Informações': [
+            'Produtividade: último Relatório de Correição e Comparativo atualizado \n Impacto Social: Bizagi – Ficha 15, Último Relatório de Correição e drive CGMP_RESULTADOS (G:\ Drives compartilhados\ CGMP_RESULTADOS)',
+            'Fichas 15 e 16 do Bizagi, Último Relatório de Correição e Certidão DCOG',
+            'Certidão da DCOG',
+            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 6 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 11 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 12 e 13 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
+            'Ficha 8 EXTRATO_MERECIMENTO BIZAGI',
+            'PENDENTE DE SABER ONDE FICA',
+        ],
+
+        'Localização das Informações': [
+            '{{Último Relatório de Correição}}, {{Comparativo de Produtividade}}, {{Bizagi - Ficha 15}}, {{Último Relatório de Correição}}',
+            '{{Bizagi - Ficha 15 e 16}}, {{Último Relatório de Correição}} e {{Certidão da Diretoria da Corregedoria-Geral}}',
+            '{{Certidão da Diretoria da Corregedoria-Geral}}',
+            '{{Bizagi - Ficha 3}}',
+            '{{Bizagi - Ficha 3}}',
+            '{{Bizagi - Ficha 3}}',
+            '{{Bizagi - Ficha 3}}',
+            '{{Bizagi - Ficha 6}}',
+            '{{Bizagi - Ficha 11}}',
+            '{{Bizagi - Ficha 12}} e {{Bizagi - Ficha 13}}',
+            '{{Bizagi - Ficha 10}}',
+            '{{Bizagi - Ficha 10}}',
+            '{{Bizagi - Ficha 10}}',
+            '{{Bizagi - Ficha 8}}',
+            'PENDENTE DE SABER ONDE FICA',
+        ],
+
+
+        'Informação Conceito ou Registro Disciplinar': ['', '', '', '', '', '', '', '', '',
+                                                        '', '', '', '', '', ''],
+
+        'Observações': [
+            'A produtividade é Avaliada com prevalência dos dados relativos aos doze últimos meses de efetivo exercício a contar da data final do edital do certame, por meio do comparativo da produtividade média dos membros do Ministério Público de unidades similares e com atuação em ofícios de atribuições análogas. O impacto social da atuação ministerial pode ser verificado a partir de registros constantes do último relatório de correição do membro e das informações constantes da Ficha 15 do extrato funcional.',
+            'Avaliada a partir da atuação judicial e extrajudicial do membro em órgão de execução (Resolução nº 002/2018–CSMP, arts. 11, inciso I, alínea “b”; 11-A e 12), pode ser extraída do último Relatório de Correição Ordinária, bem como, de dados constantes nas fichas 15 e 16 de seus assentamentos funcionais',
+            'Descumprimento de convocações, instruções, recomendações e pedidos de informação emanados dos órgãos da Administração Superior, nos doze últimos meses de efetivo exercício a contar da data final do edital de promoção/remoção pelo critério de merecimento.',
+            'Medida em razão da atuação funcional constante dos assentamentos individuais resultantes do Conceito Geral de sua última Correição Ordinária.',
+            'Avaliada pelo trabalho desenvolvido na unidade ministerial levando-se em conta o uso eficiente dos recursos humanos e administrativos a seu dispor, estando registrada na última Correição Ordinária.',
+            'A qualidade técnica dos trabalhos, aferida pela fundamentação jurídica, redação e zelo, é verificável na última visita de Correição Ordinária.',
+            'A segurança, aferida nas manifestações processuais pela adoção das providências pertinentes, precisas e sem equívocos, que revelem conhecimento jurídico e certeza no posicionamento que se está adotando é verificável na última visita de Correição Ordinária.',
+            'Não remunerada, quando designada sem prejuízo de suas funções, assegurada a '
+            'participação de todos quantos manifestarem interesse, pontuada a cada cinquenta processos ou procedimentos e/ou a cada sessão do Tribunal do Júri.',
+            ' ',
+            ' ',
+            ' ',
+            ' ',
+            ' ',
+            ' ',
+            'Não foram localizados nos assentamentos funcionais do(a) interessado(a) registros que maculem sua urbanidade no tratamento dispensado aos cidadãos, magistrados, advogados, defensores públicos, partes, servidores e membros do Ministério Público, bem como sua vida pública e privada.',
+
+        ]
+    }
 
     if st.button("visualizar"):
         # Convertendo a lista de dados para um DataFrame do Pandas
@@ -458,4 +556,14 @@ with tab5:
 
         st.table(df)  # Exibe a tabela de maneira agradável no Streamlit
 
+        # Substituindo os placeholders
+        dados_substituidos = substituir_placeholders(dados_fixos, campos_preencher)
 
+        # Convertendo os dados substituídos em um DataFrame
+        df_substituido = pd.DataFrame(dados_substituidos)
+
+
+        st.markdown("## 📋 INFORMAÇÕES DA CORREGEDORIA GERAL")
+
+        # Exibindo o segundo DataFrame sem índice
+        st.dataframe(df_substituido)

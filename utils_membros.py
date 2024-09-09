@@ -47,6 +47,17 @@ def extract_pdf(pdf, lista_verificacao: list) -> dict :
     return result
 
 
+# Função para substituir placeholders pelos valores correspondentes da lista 'campos_preencher'
+def substituir_placeholders(dados, campos_preencher):
+    for chave, valores in dados.items():
+        for i, valor in enumerate(valores):
+            for arquivo, descricao, folhas in campos_preencher:
+                if '{{' in valor:  # Verifica se há um placeholder no valor
+                    # Substitui o placeholder pelo valor correspondente da lista campos_preencher
+                    valor = valor.replace(f'{{{{{descricao}}}}}', folhas)
+            dados[chave][i] = valor  # Atualiza o valor substituído no dicionário original
+    return dados
+
 def preencher_pdf(output_pdf_path, lista_campos):
     """
     Preenche um PDF com campos específicos (números de páginas, etc.)
