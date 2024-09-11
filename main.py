@@ -567,3 +567,5 @@ with tab5:
 
         # Exibindo o segundo DataFrame sem índice
         st.dataframe(df_substituido)
+
+        download_table_direto(df_substituido, "tabela_informações")
