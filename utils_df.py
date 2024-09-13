@@ -370,3 +370,39 @@ def download_table_direto(df, nome_arquivo):
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
+# Função para salvar e baixar o arquivo Excel gerado manualmente
+def append_to_excel_manually_and_download(df_membros, df_substituido, nome_arquivo, sheet_name='Sheet1'):
+    # Criar um buffer de bytes para segurar o arquivo Excel
+    output = io.BytesIO()
+
+    # Tentar abrir o arquivo existente, ou criar um novo se não existir
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = sheet_name
+
+    # Adicionar os dados de df_membros
+    sheet.append(["Promotoria Selecionada", "Promotor", "Antiguidade", "Data Selecionada",
+                  "Órgão Ministerial da Última Correicão", "Registro de Pena"])
+    for row in dataframe_to_rows(df_membros, index=False, header=False):
+        sheet.append(row)
+
+    # Adicionar um espaçamento entre as tabelas
+    sheet.append([])  # Linha em branco para separar
+
+    # Adicionar os dados de df_substituido
+    sheet.append(
+        ["Informações", "Localização das Informações", "Informação Conceito ou Registro Disciplinar", "Observações"])
+    for row in dataframe_to_rows(df_substituido, index=False, header=False):
+        sheet.append(row)
+
+    # Salvar o arquivo no buffer de bytes
+    workbook.save(output)
+
+    # Voltar para o início do buffer
+    output.seek(0)
+
+    # Criar o botão de download para o arquivo Excel
+    st.download_button(label="Download dados tratados como Excel",
+                       data=output,
+                       file_name=f"{nome_arquivo}_dados_tratados.xlsx",
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

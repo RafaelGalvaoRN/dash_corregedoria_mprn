@@ -1,10 +1,12 @@
+import pprint
+
 import pandas as pd
 
 from utils_df import *
 from utils_graficos import *
 from documentacao import textos_documentacao
 from utils_pdf import *
-from relacao_promotorias import promotoria
+from relacao_promotorias import promotoria, dados_fixos
 from utils_cate import *
 from utils_membros import *
 
@@ -311,15 +313,39 @@ with tab4:
                                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 with tab5:
+    promotoria_selecionada, promotor, antiguidade, data_selecionada, orgao_ministerial_ultima_correicao, registro_pena = membros_menu()
+
     arquivos = membros_pdf_extract()
+
     if arquivos:
 
         campos_preencher = []
 
+        qtd_pages_pdf_file = {}
+        qtd_pages_pdf_file["sumario"] = 1
+
+        # vai ser somado 1 a todas as páginas pelo índice
+        # após, vai ser somado  onumero de página às páginas iniciais e finais, pelos documentos anteriores,
+        # na seguinte sequencia de documentos:
+        # """1. Certidão da DCOG
+        # 2. EXTRATO_MERECIMENTO BIZAGI
+        # 3. Relatório de CO
+        # 4. Comparativo Promotorias"""
+
+        # emprego da func get_value_by_partial_key para pegar value sem ter que passar_todo o nome do arquivo
+
+        for arquivo in arquivos:
+            nome_arquivo = arquivo.name.lower().strip().replace(".pdf", "")
+            qtd_pages_pdf_file[nome_arquivo] = get_pages(arquivo)
+
         for arquivo in arquivos:
             pdf_filename = arquivo.name.lower().strip()
 
-            if "Relatório de CO.pdf".strip().lower() in pdf_filename:
+            if "Relatório de CO".strip().lower() in pdf_filename:
+                qtd_paginas_anteriores = 1 + get_value_by_partial_key(qtd_pages_pdf_file,
+                                                                      "dcog") + get_value_by_partial_key(
+                    qtd_pages_pdf_file, "bizagi")
+
                 ultimo_relatorio_correicao = extract_pdf(arquivo, [("pag_inicial",
                                                                     "RELATÓRIO DE CORREIÇÃO ORDINÁRIA DE MEMBRO E EM UNIDADE"),
                                                                    ("pag_final", "(assinado eletronicamente)")])
@@ -329,18 +355,14 @@ with tab5:
                     ("pag_final", "TABELA 4 - ATIVIDADES")
                 ])
 
-                # st.write("ultimo_relatorio_correicao")
-                # st.write(ultimo_relatorio_correicao)
-                #
-                # st.write("Páginas do Comparativo de Produtividade")
-                # st.write(comparativo_produtividade)
-
                 campos_preencher.append((pdf_filename, "Último Relatório de Correição",
-                                         f"fls. {ultimo_relatorio_correicao['pag_inicial']}-{ultimo_relatorio_correicao['pag_final']}"))
+                                         f"fls. {ultimo_relatorio_correicao['pag_inicial'] + qtd_paginas_anteriores}-{ultimo_relatorio_correicao['pag_final'] + qtd_paginas_anteriores}"))
                 campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
-                                         f"fls. {comparativo_produtividade['pag_inicial']}-{comparativo_produtividade['pag_final']}"))
+                                         f"fls. {comparativo_produtividade['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_produtividade['pag_final'] + qtd_paginas_anteriores}"))
 
             if "EXTRATO_MERECIMENTO BIZAGI".strip().lower() in pdf_filename:
+                qtd_paginas_anteriores = 1 + get_value_by_partial_key(qtd_pages_pdf_file, "dcog")
+
                 bizagi_ficha_15 = extract_pdf(arquivo, [
                     ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
                     ("pag_final", "FICHA 16 – DOCUMENTOS DIVERSOS")
@@ -349,7 +371,7 @@ with tab5:
                 # st.write("bizagi_ficha_15")
                 # st.write(bizagi_ficha_15)
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 15",
-                                         f"fls. {bizagi_ficha_15['pag_inicial']}-{bizagi_ficha_15['pag_final']}"))
+                                         f"fls. {bizagi_ficha_15['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15['pag_final'] + qtd_paginas_anteriores}"))
 
                 bizagi_ficha_15_16 = extract_pdf(arquivo, [
                     ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
@@ -359,7 +381,7 @@ with tab5:
                 # st.write("bizagi_ficha_15_16")
                 # st.write(bizagi_ficha_15_16)
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 15 e 16",
-                                         f"fls. {bizagi_ficha_15_16['pag_inicial']}-{bizagi_ficha_15_16['pag_final']}"))
+                                         f"fls. {bizagi_ficha_15_16['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15_16['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_3 = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 3 - INSPEÇÕES E CORREIÇÕES"),
@@ -370,7 +392,7 @@ with tab5:
                 # st.write("Bizagi - Ficha 3")
                 # st.write(ficha_3)
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 3",
-                                         f"fls. {ficha_3['pag_inicial']}-{ficha_3['pag_final']}"))
+                                         f"fls. {ficha_3['pag_inicial'] + qtd_paginas_anteriores}-{ficha_3['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_6_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 6 - MUTIRÕES"),
@@ -381,7 +403,7 @@ with tab5:
                 # st.write(ficha_6_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 6",
-                                         f"fls. {ficha_6_bizagi['pag_inicial']}-{ficha_6_bizagi['pag_final']}"))
+                                         f"fls. {ficha_6_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_6_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_11_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 11 – CURSOS DE FORMAÇÃO CONTINUADA"),
@@ -392,9 +414,7 @@ with tab5:
                 # st.write(ficha_11_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 11",
-                                         f"fls. {ficha_11_bizagi['pag_inicial']}-{ficha_11_bizagi['pag_final']}"))
-
-
+                                         f"fls. {ficha_11_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_11_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_12_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 12 - cursos oficiais diversos"),
@@ -405,7 +425,7 @@ with tab5:
                 # st.write(ficha_12_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 12",
-                                         f"fls. {ficha_12_bizagi['pag_inicial']}-{ficha_12_bizagi['pag_final']}"))
+                                         f"fls. {ficha_12_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_12_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_13_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 13 – CURSOS RECONHECIDOS DE APERFEIÇOAMENTO"),
@@ -416,7 +436,7 @@ with tab5:
                 # st.write(ficha_13_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 13",
-                                         f"fls. {ficha_13_bizagi['pag_inicial']}-{ficha_13_bizagi['pag_final']}"))
+                                         f"fls. {ficha_13_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_13_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_10_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 10 – ESPECIALIZAÇÃO, MESTRADO OU DOUTORADO"),
@@ -427,7 +447,7 @@ with tab5:
                 # st.write(ficha_10_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 10",
-                                         f"fls. {ficha_10_bizagi['pag_inicial']}-{ficha_10_bizagi['pag_final']}"))
+                                         f"fls. {ficha_10_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_10_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
                 ficha_8_bizagi = extract_pdf(arquivo, [
                     ("pag_inicial", "FICHA 8 - PUBLICAÇÕES ACADÊMICAS"),
@@ -438,7 +458,7 @@ with tab5:
                 # st.write(ficha_8_bizagi)
 
                 campos_preencher.append((pdf_filename, "Bizagi - Ficha 8",
-                                         f"fls. {ficha_8_bizagi['pag_inicial']}-{ficha_8_bizagi['pag_final']}"))
+                                         f"fls. {ficha_8_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_8_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
             if "certidão da dcog".strip().lower() in pdf_filename:
                 certidao_dcog = extract_pdf(arquivo, [
@@ -449,112 +469,34 @@ with tab5:
                 # st.write("certidao_dcog")
                 # st.write(certidao_dcog)
 
+                # 1 somado decorrente do indice
                 campos_preencher.append((pdf_filename, "Certidão da Diretoria da Corregedoria-Geral",
-                                         f"fls. {certidao_dcog['pag_inicial']}-{certidao_dcog['pag_final']}"))
-
-    dados_fixos = {
-        'Item': ['1.1.1 Resolutividade (Produtividade e impacto social)',
-                 '1.1.2 Presteza',
-                 '1.1.3 Pronto Antedimento',
-                 '1.1.4 Eficiência',
-                 '1.1.5 Organização e Desempenho das Funções',
-                 '1.2.1 Qualidade Técnica',
-                 '1.2.2 Segurança',
-                 'Participação em Mutirões e/ou Sessões do Júri',
-                 '3.1.1 Cursos de Formação Continuada',
-                 '3.1.2 Cursos Oficiais Diversos dos de Formação Continuada e Cursos Reconhecidos de Aperfeiçoamento',
-                 'a) Doutorado (pós-graduação stricto sensu) reconhecido pelo MEC (sem o afastamento previsto no art. 197, inciso III, da Lei Complementar Estadual no 141/1996 c/c Resolução no 004/2008-CSMP).',
-                 'b) Mestrado (pós-graduação stricto sensu) reconhecido pelo MEC (sem o afastamento previsto no art. 197, inciso III, da Lei Complementar Estadual no 141/1996 c/c Resolução no 004/2008-CSMP).',
-                 'c) Curso de especialização (pós-graduação lato sensu) reconhecido pelo MEC (sem o afastamento',
-                 '3.3.1. Publicações Acadêmicas',
-                 '---',
-                 ],
-
-        # 'Informações': [
-        #     'Produtividade: último Relatório de Correição ({{Último Relatório de Correição}}) e Comparativo atualizado ({{Comparativo de Produtividade}}) \n Impacto Social: Bizagi – Ficha 15 ({{Bizagi - Ficha 15}}), Último Relatório de Correição ({{Último Relatório de Correição}}) e drive CGMP_RESULTADOS (G:\ Drives compartilhados\ CGMP_RESULTADOS)',
-        #     'Fichas 15 e 16 do Bizagi ({{Bizagi - Ficha 15 e 16}}), Último Relatório de Correição ({{Último Relatório de Correição}}) e Certidão DCOG {{Certidão da Diretoria da Corregedoria-Geral}}',
-        #     'Certidão da DCOG ({{Certidão da Diretoria da Corregedoria-Geral}})',
-        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 3 ({{Bizagi - Ficha 3}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 6 ({{Bizagi - Ficha 6}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 11 ({{Bizagi - Ficha 11}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 12 ({{Bizagi - Ficha 12}}) e 13 ({{Bizagi - Ficha 13}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 10 ({{Bizagi - Ficha 10}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'Ficha 8 ({{Bizagi - Ficha 8}}) EXTRATO_MERECIMENTO BIZAGI',
-        #     'PENDENTE DE SABER ONDE FICA',
-        # ],
-
-        'Informações': [
-            'Produtividade: último Relatório de Correição e Comparativo atualizado \n Impacto Social: Bizagi – Ficha 15, Último Relatório de Correição e drive CGMP_RESULTADOS (G:\ Drives compartilhados\ CGMP_RESULTADOS)',
-            'Fichas 15 e 16 do Bizagi, Último Relatório de Correição e Certidão DCOG',
-            'Certidão da DCOG',
-            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 3 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 6 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 11 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 12 e 13 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
-            'Ficha 8 EXTRATO_MERECIMENTO BIZAGI',
-            'PENDENTE DE SABER ONDE FICA',
-        ],
-
-        'Localização das Informações': [
-            '{{Último Relatório de Correição}}, {{Comparativo de Produtividade}}, {{Bizagi - Ficha 15}}, {{Último Relatório de Correição}}',
-            '{{Bizagi - Ficha 15 e 16}}, {{Último Relatório de Correição}} e {{Certidão da Diretoria da Corregedoria-Geral}}',
-            '{{Certidão da Diretoria da Corregedoria-Geral}}',
-            '{{Bizagi - Ficha 3}}',
-            '{{Bizagi - Ficha 3}}',
-            '{{Bizagi - Ficha 3}}',
-            '{{Bizagi - Ficha 3}}',
-            '{{Bizagi - Ficha 6}}',
-            '{{Bizagi - Ficha 11}}',
-            '{{Bizagi - Ficha 12}} e {{Bizagi - Ficha 13}}',
-            '{{Bizagi - Ficha 10}}',
-            '{{Bizagi - Ficha 10}}',
-            '{{Bizagi - Ficha 10}}',
-            '{{Bizagi - Ficha 8}}',
-            'PENDENTE DE SABER ONDE FICA',
-        ],
+                                         f"fls. {certidao_dcog['pag_inicial'] + 1}-{certidao_dcog['pag_final'] + 1}"))
 
 
-        'Informação Conceito ou Registro Disciplinar': ['', '', '', '', '', '', '', '', '',
-                                                        '', '', '', '', '', ''],
-
-        'Observações': [
-            'A produtividade é Avaliada com prevalência dos dados relativos aos doze últimos meses de efetivo exercício a contar da data final do edital do certame, por meio do comparativo da produtividade média dos membros do Ministério Público de unidades similares e com atuação em ofícios de atribuições análogas. O impacto social da atuação ministerial pode ser verificado a partir de registros constantes do último relatório de correição do membro e das informações constantes da Ficha 15 do extrato funcional.',
-            'Avaliada a partir da atuação judicial e extrajudicial do membro em órgão de execução (Resolução nº 002/2018–CSMP, arts. 11, inciso I, alínea “b”; 11-A e 12), pode ser extraída do último Relatório de Correição Ordinária, bem como, de dados constantes nas fichas 15 e 16 de seus assentamentos funcionais',
-            'Descumprimento de convocações, instruções, recomendações e pedidos de informação emanados dos órgãos da Administração Superior, nos doze últimos meses de efetivo exercício a contar da data final do edital de promoção/remoção pelo critério de merecimento.',
-            'Medida em razão da atuação funcional constante dos assentamentos individuais resultantes do Conceito Geral de sua última Correição Ordinária.',
-            'Avaliada pelo trabalho desenvolvido na unidade ministerial levando-se em conta o uso eficiente dos recursos humanos e administrativos a seu dispor, estando registrada na última Correição Ordinária.',
-            'A qualidade técnica dos trabalhos, aferida pela fundamentação jurídica, redação e zelo, é verificável na última visita de Correição Ordinária.',
-            'A segurança, aferida nas manifestações processuais pela adoção das providências pertinentes, precisas e sem equívocos, que revelem conhecimento jurídico e certeza no posicionamento que se está adotando é verificável na última visita de Correição Ordinária.',
-            'Não remunerada, quando designada sem prejuízo de suas funções, assegurada a '
-            'participação de todos quantos manifestarem interesse, pontuada a cada cinquenta processos ou procedimentos e/ou a cada sessão do Tribunal do Júri.',
-            ' ',
-            ' ',
-            ' ',
-            ' ',
-            ' ',
-            ' ',
-            'Não foram localizados nos assentamentos funcionais do(a) interessado(a) registros que maculem sua urbanidade no tratamento dispensado aos cidadãos, magistrados, advogados, defensores públicos, partes, servidores e membros do Ministério Público, bem como sua vida pública e privada.',
-
-        ]
-    }
 
     if st.button("visualizar"):
+        dados_membros = {
+            'Promotoria Selecionada': [promotoria_selecionada],
+            'Promotor': [promotor],
+            'Antiguidade': [antiguidade],
+            'Data Selecionada': [data_selecionada],
+            'Órgão Ministerial da Última Correicão': [orgao_ministerial_ultima_correicao],
+            'Registro de Pena': [registro_pena]
+        }
+
+        df_membros = pd.DataFrame(dados_membros)
+
+        st.markdown("## 📋 Tabela de Dados Gerais")
+
+        st.table(df_membros)
+
         # Convertendo a lista de dados para um DataFrame do Pandas
-        df = pd.DataFrame(campos_preencher, columns=["Nome do Arquivo", "Dados", "Páginas"])
+        df_dados_gerais = pd.DataFrame(campos_preencher, columns=["Nome do Arquivo", "Dados", "Páginas"])
+
         st.markdown("## 📋 Tabela de Informações e Páginas")
 
-        st.table(df)  # Exibe a tabela de maneira agradável no Streamlit
+        st.table(df_dados_gerais)  # Exibe a tabela de maneira agradável no Streamlit
 
         # Substituindo os placeholders
         dados_substituidos = substituir_placeholders(dados_fixos, campos_preencher)
@@ -562,10 +504,9 @@ with tab5:
         # Convertendo os dados substituídos em um DataFrame
         df_substituido = pd.DataFrame(dados_substituidos)
 
-
         st.markdown("## 📋 INFORMAÇÕES DA CORREGEDORIA GERAL")
 
         # Exibindo o segundo DataFrame sem índice
-        st.dataframe(df_substituido)
+        edited_df = st.table(df_substituido)
 
-        download_table_direto(df_substituido, "tabela_informações")
+        append_to_excel_manually_and_download(df_membros, df_substituido, "tabela_informações_completa_manual")
