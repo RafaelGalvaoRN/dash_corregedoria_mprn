@@ -1,5 +1,6 @@
 import streamlit as st
 from reportlab.pdfgen import canvas
+import zipfile
 
 from PyPDF2 import PdfReader
 
@@ -153,19 +154,7 @@ def get_page(texto_page: str, string: str) -> bool:
     return False
 
 
-from pypdf import PdfMerger
 
-
-def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
-    merger = PdfMerger()
-
-    for pdf in lista:
-        merger.append(pdf)
-
-    merger.write(output_pdf)
-    merger.close()
-
-    return output_pdf
 
 
 def get_value_by_partial_key(dictionary, partial_key):
@@ -362,7 +351,6 @@ def gerador_indice_pdf(arquivo_excel: str, output_pdf: str):
     doc.build(elements)
 
 
-import zipfile
 
 
 def download_excel_pdf(file_xlsx, merged_pdf_file):

@@ -5,6 +5,8 @@ from zipfile import ZipFile
 import os
 import tempfile
 
+from openpyxl.utils.dataframe import dataframe_to_rows
+
 
 def convert_collum_date(df, colunas):
     for coluna in colunas:

@@ -6,9 +6,11 @@ from utils_df import *
 from utils_graficos import *
 from documentacao import textos_documentacao
 from utils_pdf import *
-from relacao_promotorias import promotoria, dados_fixos
+from relacao_promotorias import dados_fixos
 from utils_cate import *
 from utils_membros import *
+from pypdf import PdfMerger
+
 
 
 def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
