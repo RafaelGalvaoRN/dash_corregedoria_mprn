@@ -1,6 +1,6 @@
 import streamlit as st
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+
 from PyPDF2 import PdfReader
 
 from relacao_promotorias import promotoria, promotores
@@ -9,6 +9,14 @@ import io
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
+
+import pandas as pd
+from datetime import date
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.units import inch
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 def append_to_excel_manually(filename, df_membros, df_substituido, sheet_name='Sheet1'):
@@ -45,18 +53,55 @@ def append_to_excel_manually(filename, df_membros, df_substituido, sheet_name='S
 
 
 # Função para salvar e baixar o arquivo Excel gerado manualmente
-def append_to_excel_manually_and_download(df_membros, df_substituido, nome_arquivo, sheet_name='Sheet1'):
-    # Criar um buffer de bytes para segurar o arquivo Excel
-    output = io.BytesIO()
+# def append_to_excel_manually_and_download(df_membros, df_substituido, nome_arquivo, sheet_name='Sheet1'):
+#     # Criar um buffer de bytes para segurar o arquivo Excel
+#     output = io.BytesIO()
+#
+#     # Tentar abrir o arquivo existente, ou criar um novo se não existir
+#     workbook = Workbook()
+#     sheet = workbook.active
+#     sheet.title = sheet_name
+#
+#     # Adicionar os dados de df_membros
+#     sheet.append(df_membros.columns.tolist())
+#     for row in dataframe_to_rows(df_membros, index=False, header=False):
+#         sheet.append(row)
+#
+#     # Adicionar um espaçamento entre as tabelas
+#     sheet.append([])  # Linha em branco para separar
+#
+#     # Adicionar os dados de df_substituido
+#     sheet.append(df_substituido.columns.tolist())
+#     for row in dataframe_to_rows(df_substituido, index=False, header=False):
+#         sheet.append(row)
+#
+#     # Salvar o arquivo no buffer de bytes
+#     workbook.save(output)
+#
+#     # Voltar para o início do buffer
+#     output.seek(0)
+#
+#
+#     file_name_saida = f"{nome_arquivo}_dados_tratados.xlsx"
+#     workbook.save(file_name_saida)
+#
+#
+#     # Criar o botão de download para o arquivo Excel
+#     st.download_button(label="Download dados tratados como Excel",
+#                        data=output,
+#                        file_name=file_name_saida,
+#                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+#
+#     return file_name_saida
 
-    # Tentar abrir o arquivo existente, ou criar um novo se não existir
+def append_to_excel_manually(df_membros, df_substituido, nome_arquivo, sheet_name='Sheet1'):
+    # Criar um novo workbook
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = sheet_name
 
     # Adicionar os dados de df_membros
-    sheet.append(["Promotoria Selecionada", "Promotor", "Antiguidade", "Data Selecionada",
-                  "Órgão Ministerial da Última Correicão", "Registro de Pena"])
+    sheet.append(df_membros.columns.tolist())
     for row in dataframe_to_rows(df_membros, index=False, header=False):
         sheet.append(row)
 
@@ -64,22 +109,16 @@ def append_to_excel_manually_and_download(df_membros, df_substituido, nome_arqui
     sheet.append([])  # Linha em branco para separar
 
     # Adicionar os dados de df_substituido
-    sheet.append(
-        ["Informações", "Localização das Informações", "Informação Conceito ou Registro Disciplinar", "Observações"])
+    sheet.append(df_substituido.columns.tolist())
     for row in dataframe_to_rows(df_substituido, index=False, header=False):
         sheet.append(row)
 
-    # Salvar o arquivo no buffer de bytes
-    workbook.save(output)
+    # Salvar o arquivo no disco
+    file_name_saida = f"{nome_arquivo}_dados_tratados.xlsx"
+    workbook.save(file_name_saida)
 
-    # Voltar para o início do buffer
-    output.seek(0)
-
-    # Criar o botão de download para o arquivo Excel
-    st.download_button(label="Download dados tratados como Excel",
-                       data=output,
-                       file_name=f"{nome_arquivo}_dados_tratados.xlsx",
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    # Retornar o nome do arquivo salvo
+    return file_name_saida
 
 
 def membros_menu():
@@ -99,7 +138,8 @@ def membros_menu():
     registro_pena = st.selectbox("Registro de Pena(s) e/ou Procedimento(s) Disciplinare(s)", ['NADA CONSTA', 'CONSTA'])
 
     return (
-    promotoria_selecionada, promotor, antiguidade, data_selecionada, orgao_ministerial_ultima_correicao, registro_pena)
+        promotoria_selecionada, promotor, antiguidade, data_selecionada, orgao_ministerial_ultima_correicao,
+        registro_pena)
 
 
 def membros_pdf_extract():
@@ -112,6 +152,20 @@ def get_page(texto_page: str, string: str) -> bool:
         return True
     return False
 
+
+from pypdf import PdfMerger
+
+
+def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
+    merger = PdfMerger()
+
+    for pdf in lista:
+        merger.append(pdf)
+
+    merger.write(output_pdf)
+    merger.close()
+
+    return output_pdf
 
 
 def get_value_by_partial_key(dictionary, partial_key):
@@ -187,3 +241,148 @@ def preencher_pdf(output_pdf_path, lista_campos):
 
     # Finaliza e salva o PDF
     c.save()
+
+
+def gerador_indice_pdf(arquivo_excel: str, output_pdf: str):
+    # Ler o arquivo Excel em um DataFrame do pandas, preservando as linhas em branco
+    df = pd.read_excel(arquivo_excel, header=None, keep_default_na=False, dtype=str)
+
+    # Identificar as linhas em branco (que separarão as duas tabelas)
+    empty_row_indices = df.index[df.isnull().all(axis=1) | (df == '').all(axis=1)].tolist()
+
+    if not empty_row_indices:
+        raise ValueError("Não foi encontrada uma linha em branco para separar as duas tabelas.")
+
+    # Dividir o DataFrame em duas tabelas
+    first_table_df = df.iloc[:empty_row_indices[0]].reset_index(drop=True)
+    second_table_df = df.iloc[empty_row_indices[0] + 1:].reset_index(drop=True)
+
+    # Remover possíveis linhas em branco adicionais
+    first_table_df = first_table_df.dropna(how='all').replace('', pd.NA).dropna(how='all')
+    second_table_df = second_table_df.dropna(how='all').replace('', pd.NA).dropna(how='all')
+
+    # Processar a primeira tabela
+    # Definir a primeira linha como cabeçalho
+    header_row_first = first_table_df.iloc[0]
+    non_null_cols_first = header_row_first.notna() & (header_row_first != '')
+    # Selecionar apenas as colunas com nomes válidos
+    first_table_df = first_table_df.loc[:, non_null_cols_first]
+    header_row_first = header_row_first[non_null_cols_first]
+    # Definir os nomes das colunas
+    first_table_df.columns = header_row_first
+    # Remover a linha de cabeçalho dos dados
+    first_table_df = first_table_df[1:].reset_index(drop=True)
+
+    # Processar a segunda tabela
+    header_row_second = second_table_df.iloc[0]
+    non_null_cols_second = header_row_second.notna() & (header_row_second != '')
+    # Selecionar apenas as colunas com nomes válidos
+    second_table_df = second_table_df.loc[:, non_null_cols_second]
+    header_row_second = header_row_second[non_null_cols_second]
+    # Definir os nomes das colunas
+    second_table_df.columns = header_row_second
+    # Remover a linha de cabeçalho dos dados
+    second_table_df = second_table_df[1:].reset_index(drop=True)
+
+    # Criar um SimpleDocTemplate
+    doc = SimpleDocTemplate(output_pdf, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    today_date = date.today().strftime("%d/%m/%Y")
+
+    header_texts = ["CORREGEDORIA GERAL DO MPRN", "RELATÓRIO AUTOMATIZADO DE INFORMAÇÕES DO MEMBRO",
+                    f"Consultas realizadas em {today_date}"]
+    header_image = r"img/logo-mprn.png"
+
+    # Cabeçalho
+    # Adicionar a imagem do cabeçalho
+    img = Image(header_image)
+    img.drawHeight = 1.0 * inch
+    img.drawWidth = 3.0 * inch
+    img.hAlign = 'CENTER'
+    elements.append(img)
+    elements.append(Spacer(1, 0.2 * inch))
+
+    # Adicionar as linhas de texto do cabeçalho
+    for text in header_texts:
+        paragraph = Paragraph(text, styles['Title'])
+        paragraph.hAlign = 'CENTER'
+        elements.append(paragraph)
+        elements.append(Spacer(1, 0.1 * inch))
+
+    # Adicionar espaço após o cabeçalho
+    elements.append(Spacer(0.1, 0.01 * inch))
+
+    # Função auxiliar para criar uma tabela a partir de um DataFrame
+    def create_table_from_df(df_table, col_widths):
+        data = [df_table.columns.tolist()] + df_table.values.tolist()
+
+        # Converter células em Paragraph para suportar quebra de linha
+        styleN = styles['Normal']
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                data[i][j] = Paragraph(str(data[i][j]), styleN)
+
+        # Criar a tabela com os dados e colunas ajustadas
+        table = Table(data, colWidths=col_widths, repeatRows=1)
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ])
+        table.setStyle(style)
+        return table
+
+    # Adicionar a primeira tabela ao PDF
+    # Defina manualmente as larguras das colunas da primeira tabela
+    col_widths_first_table = [1.3 * inch] * len(first_table_df.columns)  # Ajuste conforme necessário
+
+    table1 = create_table_from_df(first_table_df, col_widths_first_table)
+    elements.append(table1)
+    elements.append(Spacer(1, 0.5 * inch))  # Espaço após a primeira tabela
+
+    # Adicionar a segunda tabela ao PDF
+    # Defina manualmente as larguras das colunas da segunda tabela
+    col_widths_second_table = [2.8 * inch, 3.0 * inch, 2.0 * inch]  # Ajuste conforme necessário
+
+    table2 = create_table_from_df(second_table_df, col_widths_second_table)
+    elements.append(table2)
+    elements.append(Spacer(1, 0.5 * inch))  # Espaço após a segunda tabela
+
+    # Construir o documento PDF
+    doc.build(elements)
+
+
+import zipfile
+
+
+def download_excel_pdf(file_xlsx, merged_pdf_file):
+    # Criar um buffer de bytes para o arquivo ZIP
+    zip_buffer = io.BytesIO()
+
+    # Criar um arquivo ZIP contendo o Excel e o PDF mesclado
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        # Adicionar o arquivo Excel ao ZIP
+        zip_file.write(file_xlsx, arcname=file_xlsx)
+        # Adicionar o arquivo PDF mesclado ao ZIP
+        zip_file.write(merged_pdf_file, arcname=merged_pdf_file)
+
+    # Mover o ponteiro para o início do buffer
+    zip_buffer.seek(0)
+
+    # Criar o botão de download para o arquivo ZIP contendo ambos os arquivos
+    st.download_button(
+        label="Download arquivos (Excel e PDF)",
+        data=zip_buffer,
+        file_name="arquivos.zip",
+        mime="application/zip"
+    )

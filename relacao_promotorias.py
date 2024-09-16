@@ -219,7 +219,7 @@ dados_fixos = {
             'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
             'Ficha 10 EXTRATO_MERECIMENTO BIZAGI',
             'Ficha 8 EXTRATO_MERECIMENTO BIZAGI',
-            'PENDENTE DE SABER ONDE FICA',
+            'EXTRATO_MERECIMENTO BIZAGI',
         ],
 
         'Localização das Informações': [
@@ -237,7 +237,7 @@ dados_fixos = {
             '{{Bizagi - Ficha 10}}',
             '{{Bizagi - Ficha 10}}',
             '{{Bizagi - Ficha 8}}',
-            'PENDENTE DE SABER ONDE FICA',
+            '{{Bizagi - Integral}}',
         ],
 
         'Informação Conceito ou Registro Disciplinar': ['', '', '', '', '', '', '', '', '',

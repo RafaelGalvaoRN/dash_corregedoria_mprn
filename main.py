@@ -10,6 +10,19 @@ from relacao_promotorias import promotoria, dados_fixos
 from utils_cate import *
 from utils_membros import *
 
+
+def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
+    merger = PdfMerger()
+
+    for pdf in lista:
+        merger.append(pdf)
+
+    merger.write(output_pdf)
+    merger.close()
+
+    return output_pdf
+
+
 st.title("APP - Corregedoria 🗂️ ")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
@@ -317,196 +330,237 @@ with tab5:
 
     arquivos = membros_pdf_extract()
 
+
     if arquivos:
+        if len(arquivos) < 4:
+            st.error("Necessário colocar ao menos 4 arquivos em pdf")
 
-        campos_preencher = []
+        elif len(arquivos) >= 4:
+            campos_preencher = []
 
-        qtd_pages_pdf_file = {}
-        qtd_pages_pdf_file["sumario"] = 1
+            qtd_pages_pdf_file = {}
+            qtd_pages_pdf_file["sumario"] = 2
 
-        # vai ser somado 1 a todas as páginas pelo índice
-        # após, vai ser somado  onumero de página às páginas iniciais e finais, pelos documentos anteriores,
-        # na seguinte sequencia de documentos:
-        # """1. Certidão da DCOG
-        # 2. EXTRATO_MERECIMENTO BIZAGI
-        # 3. Relatório de CO
-        # 4. Comparativo Promotorias"""
+            # vai ser somado 1 a todas as páginas pelo índice
+            # após, vai ser somado  onumero de página às páginas iniciais e finais, pelos documentos anteriores,
+            # na seguinte sequencia de documentos:
+            # """1. Certidão da DCOG
+            # 2. EXTRATO_MERECIMENTO BIZAGI
+            # 3. Relatório de CO
+            # 4. Comparativo Promotorias"""
 
-        # emprego da func get_value_by_partial_key para pegar value sem ter que passar_todo o nome do arquivo
+            # emprego da func get_value_by_partial_key para pegar value sem ter que passar_todo o nome do arquivo
 
-        for arquivo in arquivos:
-            nome_arquivo = arquivo.name.lower().strip().replace(".pdf", "")
-            qtd_pages_pdf_file[nome_arquivo] = get_pages(arquivo)
+            for arquivo in arquivos:
+                nome_arquivo = arquivo.name.lower().strip().replace(".pdf", "")
+                qtd_pages_pdf_file[nome_arquivo] = get_pages(arquivo)
 
-        for arquivo in arquivos:
-            pdf_filename = arquivo.name.lower().strip()
+            for arquivo in arquivos:
+                pdf_filename = arquivo.name.lower().strip()
 
-            if "Relatório de CO".strip().lower() in pdf_filename:
-                qtd_paginas_anteriores = 1 + get_value_by_partial_key(qtd_pages_pdf_file,
-                                                                      "dcog") + get_value_by_partial_key(
-                    qtd_pages_pdf_file, "bizagi")
+                if "Relatório de CO".strip().lower() in pdf_filename:
+                    qtd_paginas_anteriores = 2 + get_value_by_partial_key(qtd_pages_pdf_file,
+                                                                          "dcog") + get_value_by_partial_key(
+                        qtd_pages_pdf_file, "bizagi")
 
-                ultimo_relatorio_correicao = extract_pdf(arquivo, [("pag_inicial",
-                                                                    "RELATÓRIO DE CORREIÇÃO ORDINÁRIA DE MEMBRO E EM UNIDADE"),
-                                                                   ("pag_final", "(assinado eletronicamente)")])
+                    ultimo_relatorio_correicao = extract_pdf(arquivo, [("pag_inicial",
+                                                                        "RELATÓRIO DE CORREIÇÃO ORDINÁRIA DE MEMBRO E EM UNIDADE"),
+                                                                       ("pag_final", "(assinado eletronicamente)")])
 
-                comparativo_produtividade = extract_pdf(arquivo, [
-                    ("pag_inicial", "TABELA 1 - MOVIMENTAÇÃO PROCESSUAL (JUDICIAL)"),
-                    ("pag_final", "TABELA 4 - ATIVIDADES")
-                ])
+                    comparativo_produtividade = extract_pdf(arquivo, [
+                        ("pag_inicial", "TABELA 1 - MOVIMENTAÇÃO PROCESSUAL (JUDICIAL)"),
+                        ("pag_final", "TABELA 4 - ATIVIDADES")
+                    ])
 
-                campos_preencher.append((pdf_filename, "Último Relatório de Correição",
-                                         f"fls. {ultimo_relatorio_correicao['pag_inicial'] + qtd_paginas_anteriores}-{ultimo_relatorio_correicao['pag_final'] + qtd_paginas_anteriores}"))
-                campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
-                                         f"fls. {comparativo_produtividade['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_produtividade['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Último Relatório de Correição",
+                                             f"fls. {ultimo_relatorio_correicao['pag_inicial'] + qtd_paginas_anteriores}-{ultimo_relatorio_correicao['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
+                                             f"fls. {comparativo_produtividade['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_produtividade['pag_final'] + qtd_paginas_anteriores}"))
 
-            if "EXTRATO_MERECIMENTO BIZAGI".strip().lower() in pdf_filename:
-                qtd_paginas_anteriores = 1 + get_value_by_partial_key(qtd_pages_pdf_file, "dcog")
+                if "EXTRATO_MERECIMENTO BIZAGI".strip().lower() in pdf_filename:
+                    qtd_paginas_anteriores = 2 + get_value_by_partial_key(qtd_pages_pdf_file, "dcog")
 
-                bizagi_ficha_15 = extract_pdf(arquivo, [
-                    ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
-                    ("pag_final", "FICHA 16 – DOCUMENTOS DIVERSOS")
-                ])
+                    bizagi_ficha_15 = extract_pdf(arquivo, [
+                        ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
+                        ("pag_final", "FICHA 16 – DOCUMENTOS DIVERSOS")
+                    ])
 
-                # st.write("bizagi_ficha_15")
-                # st.write(bizagi_ficha_15)
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 15",
-                                         f"fls. {bizagi_ficha_15['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15['pag_final'] + qtd_paginas_anteriores}"))
+                    # st.write("bizagi_ficha_15")
+                    # st.write(bizagi_ficha_15)
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 15",
+                                             f"fls. {bizagi_ficha_15['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15['pag_final'] + qtd_paginas_anteriores}"))
 
-                bizagi_ficha_15_16 = extract_pdf(arquivo, [
-                    ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
-                    ("pag_final", "FICHA 16 – DOCUMENTOS DIVERSOS")
-                ])
+                    bizagi_ficha_15_16 = extract_pdf(arquivo, [
+                        ("pag_inicial", "DEMAIS DADOS/DOCUMENTOS RELEVANTES"),
+                        ("pag_final", "FICHA 16 – DOCUMENTOS DIVERSOS")
+                    ])
 
-                # st.write("bizagi_ficha_15_16")
-                # st.write(bizagi_ficha_15_16)
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 15 e 16",
-                                         f"fls. {bizagi_ficha_15_16['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15_16['pag_final'] + qtd_paginas_anteriores}"))
+                    # st.write("bizagi_ficha_15_16")
+                    # st.write(bizagi_ficha_15_16)
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 15 e 16",
+                                             f"fls. {bizagi_ficha_15_16['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15_16['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_3 = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 3 - INSPEÇÕES E CORREIÇÕES"),
-                    ("pag_final", "FICHA 5")
-                ])
+                    ficha_3 = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 3 - INSPEÇÕES E CORREIÇÕES"),
+                        ("pag_final", "FICHA 5")
+                    ])
 
-                #
-                # st.write("Bizagi - Ficha 3")
-                # st.write(ficha_3)
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 3",
-                                         f"fls. {ficha_3['pag_inicial'] + qtd_paginas_anteriores}-{ficha_3['pag_final'] + qtd_paginas_anteriores}"))
+                    #
+                    # st.write("Bizagi - Ficha 3")
+                    # st.write(ficha_3)
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 3",
+                                             f"fls. {ficha_3['pag_inicial'] + qtd_paginas_anteriores}-{ficha_3['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_6_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 6 - MUTIRÕES"),
-                    ("pag_final", "FICHA 7")
-                ])
+                    ficha_6_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 6 - MUTIRÕES"),
+                        ("pag_final", "FICHA 7")
+                    ])
 
-                # st.write("ficha_6_bizagi")
-                # st.write(ficha_6_bizagi)
+                    # st.write("ficha_6_bizagi")
+                    # st.write(ficha_6_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 6",
-                                         f"fls. {ficha_6_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_6_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 6",
+                                             f"fls. {ficha_6_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_6_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_11_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 11 – CURSOS DE FORMAÇÃO CONTINUADA"),
-                    ("pag_final", "FICHA 12")
-                ])
+                    ficha_11_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 11 – CURSOS DE FORMAÇÃO CONTINUADA"),
+                        ("pag_final", "FICHA 12")
+                    ])
 
-                # st.write("ficha_11_bizagi")
-                # st.write(ficha_11_bizagi)
+                    # st.write("ficha_11_bizagi")
+                    # st.write(ficha_11_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 11",
-                                         f"fls. {ficha_11_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_11_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 11",
+                                             f"fls. {ficha_11_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_11_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_12_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 12 - cursos oficiais diversos"),
-                    ("pag_final", "FICHA 13")
-                ])
+                    ficha_12_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 12 - cursos oficiais diversos"),
+                        ("pag_final", "FICHA 13")
+                    ])
 
-                # st.write("ficha_12_bizagi")
-                # st.write(ficha_12_bizagi)
+                    # st.write("ficha_12_bizagi")
+                    # st.write(ficha_12_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 12",
-                                         f"fls. {ficha_12_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_12_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 12",
+                                             f"fls. {ficha_12_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_12_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_13_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 13 – CURSOS RECONHECIDOS DE APERFEIÇOAMENTO"),
-                    ("pag_final", "FICHA 14")
-                ])
+                    ficha_13_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 13 – CURSOS RECONHECIDOS DE APERFEIÇOAMENTO"),
+                        ("pag_final", "FICHA 14")
+                    ])
 
-                # st.write("ficha_13_bizagi")
-                # st.write(ficha_13_bizagi)
+                    # st.write("ficha_13_bizagi")
+                    # st.write(ficha_13_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 13",
-                                         f"fls. {ficha_13_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_13_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 13",
+                                             f"fls. {ficha_13_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_13_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_10_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 10 – ESPECIALIZAÇÃO, MESTRADO OU DOUTORADO"),
-                    ("pag_final", "FICHA 11")
-                ])
+                    ficha_10_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 10 – ESPECIALIZAÇÃO, MESTRADO OU DOUTORADO"),
+                        ("pag_final", "FICHA 11")
+                    ])
 
-                # st.write("ficha_10_bizagi")
-                # st.write(ficha_10_bizagi)
+                    # st.write("ficha_10_bizagi")
+                    # st.write(ficha_10_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 10",
-                                         f"fls. {ficha_10_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_10_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 10",
+                                             f"fls. {ficha_10_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_10_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-                ficha_8_bizagi = extract_pdf(arquivo, [
-                    ("pag_inicial", "FICHA 8 - PUBLICAÇÕES ACADÊMICAS"),
-                    ("pag_final", "FICHA 9")
-                ])
+                    ficha_8_bizagi = extract_pdf(arquivo, [
+                        ("pag_inicial", "FICHA 8 - PUBLICAÇÕES ACADÊMICAS"),
+                        ("pag_final", "FICHA 9")
+                    ])
 
-                # st.write("ficha_8_bizagi")
-                # st.write(ficha_8_bizagi)
+                    # st.write("ficha_8_bizagi")
+                    # st.write(ficha_8_bizagi)
 
-                campos_preencher.append((pdf_filename, "Bizagi - Ficha 8",
-                                         f"fls. {ficha_8_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_8_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                    campos_preencher.append((pdf_filename, "Bizagi - Ficha 8",
+                                             f"fls. {ficha_8_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_8_bizagi['pag_final'] + qtd_paginas_anteriores}"))
 
-            if "certidão da dcog".strip().lower() in pdf_filename:
-                certidao_dcog = extract_pdf(arquivo, [
-                    ("pag_inicial", "certidão"),
-                    ("pag_final", "natal")
-                ])
-                #
-                # st.write("certidao_dcog")
-                # st.write(certidao_dcog)
 
-                # 1 somado decorrente do indice
-                campos_preencher.append((pdf_filename, "Certidão da Diretoria da Corregedoria-Geral",
-                                         f"fls. {certidao_dcog['pag_inicial'] + 1}-{certidao_dcog['pag_final'] + 1}"))
+                    #extrato merececimento bizagi
+
+                    extrato_merecimento_bizagi = (1, get_pages(arquivo))
+
+                    campos_preencher.append((pdf_filename, "Bizagi - Integral",
+                                             f"fls. {1 + qtd_paginas_anteriores}-{extrato_merecimento_bizagi[1] + qtd_paginas_anteriores}"))
 
 
 
-    if st.button("visualizar"):
-        dados_membros = {
-            'Promotoria Selecionada': [promotoria_selecionada],
-            'Promotor': [promotor],
-            'Antiguidade': [antiguidade],
-            'Data Selecionada': [data_selecionada],
-            'Órgão Ministerial da Última Correicão': [orgao_ministerial_ultima_correicao],
-            'Registro de Pena': [registro_pena]
-        }
+                if "certidão da dcog".strip().lower() in pdf_filename:
+                    certidao_dcog = extract_pdf(arquivo, [
+                        ("pag_inicial", "certidão"),
+                        ("pag_final", "natal")
+                    ])
+                    #
+                    # st.write("certidao_dcog")
+                    # st.write(certidao_dcog)
 
-        df_membros = pd.DataFrame(dados_membros)
+                    # 1 somado decorrente do indice
+                    campos_preencher.append((pdf_filename, "Certidão da Diretoria da Corregedoria-Geral",
+                                             f"fls. {certidao_dcog['pag_inicial'] + 2}-{certidao_dcog['pag_final'] + 2}"))
 
-        st.markdown("## 📋 Tabela de Dados Gerais")
 
-        st.table(df_membros)
+            if st.button("visualizar"):
+                dados_membros = {
+                    'Promotoria Selecionada': [promotoria_selecionada],
+                    'Promotor': [promotor],
+                    'Antiguidade': [antiguidade],
+                    'Data Selecionada': [data_selecionada],
+                    'Órgão Ministerial da Última Correicão': [orgao_ministerial_ultima_correicao],
+                    'Registro de Pena': [registro_pena]
+                }
 
-        # Convertendo a lista de dados para um DataFrame do Pandas
-        df_dados_gerais = pd.DataFrame(campos_preencher, columns=["Nome do Arquivo", "Dados", "Páginas"])
+                df_membros = pd.DataFrame(dados_membros)
 
-        st.markdown("## 📋 Tabela de Informações e Páginas")
+                st.markdown("## 📋 Tabela de Dados Gerais do Membro")
+                st.table(df_membros)
 
-        st.table(df_dados_gerais)  # Exibe a tabela de maneira agradável no Streamlit
+                # Convertendo a lista de dados para um DataFrame do Pandas
+                df_dados_gerais = pd.DataFrame(campos_preencher, columns=["Nome do Arquivo", "Dados", "Páginas"])
 
-        # Substituindo os placeholders
-        dados_substituidos = substituir_placeholders(dados_fixos, campos_preencher)
+                st.markdown("## 📋 Tabela de Informações e Páginas")
+                st.table(df_dados_gerais)  # Exibe a tabela de maneira agradável no Streamlit
 
-        # Convertendo os dados substituídos em um DataFrame
-        df_substituido = pd.DataFrame(dados_substituidos)
+                # Substituindo os placeholders
+                dados_substituidos = substituir_placeholders(dados_fixos, campos_preencher)
 
-        st.markdown("## 📋 INFORMAÇÕES DA CORREGEDORIA GERAL")
+                # Convertendo os dados substituídos em um DataFrame
+                df_substituido = pd.DataFrame(dados_substituidos)
 
-        # Exibindo o segundo DataFrame sem índice
-        edited_df = st.table(df_substituido)
+                #excluindo colunas
 
-        append_to_excel_manually_and_download(df_membros, df_substituido, "tabela_informações_completa_manual")
+
+                colunas_excluir=["Informação Conceito ou Registro Disciplinar", "Observações"]
+                df_substituido_tratado = df_substituido.drop(columns=colunas_excluir)
+
+
+                st.markdown("## 📋 INFORMAÇÕES DA CORREGEDORIA GERAL")
+                # Exibindo o segundo DataFrame sem índice e sem colunas já excluidas
+                st.table(df_substituido_tratado)
+
+
+                file_xlsx = append_to_excel_manually(df_membros, df_substituido_tratado, "tabela_informações_completa_manual")
+
+                gerador_indice_pdf(file_xlsx, "indice.pdf")
+
+
+                #ordenar arquivos e incluir indice na posicao 0
+                arquivos_ordenados = sorted(arquivos, key=lambda x: x.name)
+
+                files_mesclar = ["indice.pdf"] + arquivos_ordenados
+
+
+                #mesclar arquivos pdf
+                merged_pdf_file = pdf_merger_files(files_mesclar, 'merged.pdf')
+
+
+
+
+                download_excel_pdf(file_xlsx, merged_pdf_file)
+
+                st.success("Concluído")
+
+
+
+
