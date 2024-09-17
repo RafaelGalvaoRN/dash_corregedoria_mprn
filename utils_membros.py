@@ -17,7 +17,8 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+import locale
 
 
 def append_to_excel_manually(filename, df_membros, df_substituido, sheet_name='Sheet1'):
@@ -123,24 +124,27 @@ def append_to_excel_manually(df_membros, df_substituido, nome_arquivo, sheet_nam
 
 
 def membros_menu():
+    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+
+
     promotoria_ordenada = sorted(promotoria)
 
     promotoria_selecionada = st.selectbox("Escolha o cargo do Candidato", promotoria_ordenada, key="promotoria_tab5")
 
-    promotor = st.selectbox('Escolha o nome do Promotor:', promotores)
+    promotor = st.selectbox('Escolha o nome do Membro:', promotores)
 
     antiguidade = st.number_input("Digite a posição na lista de antiguidade", min_value=1)
 
     data_selecionada = st.date_input('Data da Última Correição Ordinária', datetime.now().date())
 
-    orgao_ministerial_ultima_correicao = st.selectbox("Escolha o cargo do Candidato", promotoria_ordenada,
-                                                      key="orgao_correicao_tab5")
+    data_selecionada = data_selecionada.strftime("%d-%m-%Y")
 
-    registro_pena = st.selectbox("Registro de Pena(s) e/ou Procedimento(s) Disciplinare(s)", ['NADA CONSTA', 'CONSTA'])
+    orgao_ministerial_ultima_correicao = st.selectbox("Escolha o órgão Mnisterial da Última Correição do  Candidato", promotoria_ordenada)
+
 
     return (
         promotoria_selecionada, promotor, antiguidade, data_selecionada, orgao_ministerial_ultima_correicao,
-        registro_pena)
+        )
 
 
 def membros_pdf_extract():
@@ -281,7 +285,7 @@ def gerador_indice_pdf(arquivo_excel: str, output_pdf: str):
     today_date = date.today().strftime("%d/%m/%Y")
 
     header_texts = ["CORREGEDORIA GERAL DO MPRN", "RELATÓRIO AUTOMATIZADO DE INFORMAÇÕES DO MEMBRO",
-                    f"Consultas realizadas em {today_date}"]
+                    f"Relatório emitido em {today_date}"]
     header_image = r"img/logo-mprn.png"
 
     # Cabeçalho
@@ -293,12 +297,19 @@ def gerador_indice_pdf(arquivo_excel: str, output_pdf: str):
     elements.append(img)
     elements.append(Spacer(1, 0.2 * inch))
 
+    font_size = 20  # Começa com 14, por exemplo
+
     # Adicionar as linhas de texto do cabeçalho
     for text in header_texts:
-        paragraph = Paragraph(text, styles['Title'])
+        style_with_dynamic_font = ParagraphStyle(name='DynamicFont', fontSize=font_size,
+                                                 alignment=1, leading=font_size + 6)
+
+        paragraph = Paragraph(text, style_with_dynamic_font)
         paragraph.hAlign = 'CENTER'
         elements.append(paragraph)
-        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Spacer(1, 0.3 * inch))
+
+        font_size -= 4  # Diminui o tamanho da fonte em 2 a cada iteração
 
     # Adicionar espaço após o cabeçalho
     elements.append(Spacer(0.1, 0.01 * inch))

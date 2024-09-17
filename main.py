@@ -25,6 +25,12 @@ def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
     return output_pdf
 
 
+st.set_page_config(page_title="APP - Corregedoria MPRN", page_icon="🗂️",
+                   menu_items={
+                       'About': "rafael.galvao@mprn.mp.br"
+                   }
+                   )
+
 st.title("APP - Corregedoria 🗂️ ")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
@@ -328,7 +334,7 @@ with tab4:
                                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 with tab5:
-    promotoria_selecionada, promotor, antiguidade, data_selecionada, orgao_ministerial_ultima_correicao, registro_pena = membros_menu()
+    cargo_do_candidato, membro, posicao_lista_antiguidade, ultima_correicao_ordinaria, orgao_ministerial_ultima_correicao= membros_menu()
 
     arquivos = membros_pdf_extract()
 
@@ -505,12 +511,12 @@ with tab5:
 
             if st.button("visualizar"):
                 dados_membros = {
-                    'Promotoria Selecionada': [promotoria_selecionada],
-                    'Promotor': [promotor],
-                    'Antiguidade': [antiguidade],
-                    'Data Selecionada': [data_selecionada],
-                    'Órgão Ministerial da Última Correicão': [orgao_ministerial_ultima_correicao],
-                    'Registro de Pena': [registro_pena]
+                    'Cargo do Candidato': [cargo_do_candidato],
+                    'Membro': [membro],
+                    'Posição na Lista de Antiguidade': [posicao_lista_antiguidade],
+                    'Última Correição Ordinária': [ultima_correicao_ordinaria],
+                    'Órgão Ministerial da Última Correição': [orgao_ministerial_ultima_correicao],
+
                 }
 
                 df_membros = pd.DataFrame(dados_membros)
