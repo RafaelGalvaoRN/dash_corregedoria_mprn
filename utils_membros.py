@@ -18,7 +18,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-import locale
+
 
 
 def append_to_excel_manually(filename, df_membros, df_substituido, sheet_name='Sheet1'):
@@ -124,8 +124,6 @@ def append_to_excel_manually(df_membros, df_substituido, nome_arquivo, sheet_nam
 
 
 def membros_menu():
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-
 
     promotoria_ordenada = sorted(promotoria)
 
