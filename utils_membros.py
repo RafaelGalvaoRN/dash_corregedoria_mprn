@@ -172,36 +172,189 @@ def get_pages(pdf) -> int:
     return len(reader.pages)
 
 
-def extract_pdf(pdf, lista_verificacao: list) -> dict:
-    """
-    extrai texto de pdf e verifica pagina inicial e pagina final do relatório procurado
-    :param pdf: texto a ser extraído
-    :param lista_verificacao: lsita com tupla, contendo o tipo da página (inicial ou final) e o texto contido na
-    página
-    :return: dict contendo os dados encontrados
-    """
+# def extract_pdf(pdf, lista_verificacao: list) -> dict:
+#     """
+#     extrai texto de pdf e verifica pagina inicial e pagina final do relatório procurado
+#     :param pdf: texto a ser extraído
+#     :param lista_verificacao: lsita com tupla, contendo o tipo da página (inicial ou final) e o texto contido na
+#     página
+#     :return: dict contendo os dados encontrados
+#     """
+#
+#     # Criando um objeto PdfReader
+#     reader = PdfReader(pdf)
+#
+#     # Inicializando uma variável para armazenar o texto extraído
+#     full_text = ""
+#
+#     result = {}
+#
+#     # Iterando sobre todas as páginas do PDF
+#     for i in range(len(reader.pages)):
+#         # Obtendo uma página específica do arquivo PDF
+#         page = reader.pages[i]
+#
+#         # Extraindo o texto da página
+#         text = page.extract_text().lower()
+#
+#         for item in lista_verificacao:
+#             if get_page(text, item[1]):
+#                 result[item[0]] = i + 1
+#
+#     return result
 
-    # Criando um objeto PdfReader
+import re
+
+# def extract_pdf(pdf, lista_verificacao: list, first_search: bool = True, opcional_string: str = None) -> dict:
+#     """
+#     Extracts text from a PDF and identifies the initial and final pages of the desired sections.
+#
+#     :param pdf: Path to the PDF file.
+#     :param lista_verificacao: List of tuples, each containing the type of page ('pag_inicial' or 'pag_final') and the text to search for.
+#     :param first_search: If False, skips the first occurrence of the initial string.
+#     :param opcional_string: Optional string to search for after the final page string.
+#     :return: Dictionary containing the found page numbers.
+#     """
+#
+#     print("Inicializando a funcao interna")
+#     print("argumento: ", lista_verificacao)
+#
+#
+#     reader = PdfReader(pdf)
+#     result = {'pag_inicial': None, 'pag_final': None}
+#
+#     total_pages = len(reader.pages)
+#     found_pag_inicial = False
+#     found_pag_final = False
+#     initial_string_occurrences = 0  # Counter for occurrences of the initial string
+#
+#     for i in range(total_pages):
+#         page = reader.pages[i]
+#         text = page.extract_text()
+#         if text:
+#             text_lower = text.lower()
+#
+#             # Search for the initial page string
+#             if not found_pag_inicial:
+#                 initial_string = lista_verificacao[0][1].lower()
+#                 if initial_string in text_lower:
+#                     initial_string_occurrences += 1
+#                     if not first_search and initial_string_occurrences == 1:
+#                         # Skip the first occurrence
+#                         continue
+#                     result['pag_inicial'] = i + 1  # Pages are 1-indexed
+#                     found_pag_inicial = True
+#                     continue  # Proceed to next page
+#
+#             # Search for the final page string
+#             if found_pag_inicial and not found_pag_final:
+#                 final_string = lista_verificacao[1][1].lower()
+#
+#                 print("imprimindo argumento lista verificacao", lista_verificacao)
+#                 print("verificando pagina final")
+#                 print("procurado final string:", final_string)
+#                 print("procurando no texto: ",text_lower )
+#
+#                 if final_string in text_lower:
+#                     result['pag_final'] = i + 1
+#                     found_pag_final = True
+#
+#                     # If an optional string is provided, search for it after finding the final page string
+#                     if opcional_string:
+#                         opcional_string_lower = opcional_string.lower()
+#                         # Continue searching from the next page
+#                         for j in range(i + 1, total_pages):
+#                             next_page = reader.pages[j]
+#                             next_text = next_page.extract_text()
+#                             if next_text and opcional_string_lower in next_text.lower():
+#                                 result['pag_final'] = j + 1
+#                                 break
+#                     break  # Stop processing after finding the final page (and optional string if provided)
+#
+#     print("imprimindo retorno da funcao", result)
+#     return result
+
+
+
+def extract_pdf(pdf, lista_verificacao: list, first_search: bool = True, opcional_string: str = None) -> dict:
+    """
+    Extracts text from a PDF and identifies the initial and final pages of the desired sections.
+    Optionally, it searches for an additional string after finding the initial final page.
+
+    :param pdf: Path to the PDF file.
+    :param lista_verificacao: List of tuples, each containing the type of page ('pag_inicial' or 'pag_final') and the text to search for.
+    :param first_search: If False, skips the first occurrence of the initial string.
+    :param opcional_string: Optional string to search for after the final page string is found.
+    :return: Dictionary containing the found page numbers.
+    """
+    # print("Initializing function")
+    # print("Arguments:", lista_verificacao)
+
     reader = PdfReader(pdf)
+    result = {'pag_inicial': None, 'pag_final': None, 'opcional_string': None}
 
-    # Inicializando uma variável para armazenar o texto extraído
-    full_text = ""
+    total_pages = len(reader.pages)
+    initial_string_occurrences = 0  # Counter for occurrences of the initial string
 
-    result = {}
-
-    # Iterando sobre todas as páginas do PDF
-    for i in range(len(reader.pages)):
-        # Obtendo uma página específica do arquivo PDF
+    # Step 1: Search for 'pag_inicial'
+    for i in range(total_pages):
         page = reader.pages[i]
+        text = page.extract_text()
+        if text:
+            text_lower = text.lower()
+            initial_string = lista_verificacao[0][1].lower()
+            if initial_string in text_lower:
+                initial_string_occurrences += 1
+                if not first_search and initial_string_occurrences == 1:
+                    # print(f"Skipping first occurrence of initial string on page {i + 1}")
+                    pass  # Skips the first occurrence if first_search is False
+                else:
+                    result['pag_inicial'] = i + 1  # Pages are 1-indexed
+                    # print(f"Found 'pag_inicial' on page {i + 1}")
+                    break  # Stop searching for 'pag_inicial'
 
-        # Extraindo o texto da página
-        text = page.extract_text().lower()
+    # Check if 'pag_inicial' is None
+    if result['pag_inicial'] is None:
+        # print("Error: 'pag_inicial' not found.")
+        return result
 
-        for item in lista_verificacao:
-            if get_page(text, item[1]):
-                result[item[0]] = i + 1
+    # Step 2: Search for 'pag_final' based on the second string in lista_verificacao
+    final_string = lista_verificacao[1][1].lower()
+    if result['pag_inicial'] is not None:
+        # print("Searching for 'pag_final'")
+        start_index = result['pag_inicial'] - 1  # Convert to zero-based index
+        for i in range(start_index, total_pages):
+            page = reader.pages[i]
+            text = page.extract_text()
+            if text:
+                text_lower = text.lower()
+                if final_string in text_lower:
+                    result['pag_final'] = i + 1  # Pages are 1-indexed
+                    # print(f"Found 'pag_final' on page {i + 1}")
+                    break  # Stop searching after finding 'pag_final'
 
+    # Step 3: If opcional_string is provided, search for it after 'pag_final'
+    if opcional_string and result['pag_final'] is not None:
+        # print("Searching for optional string:", opcional_string)
+        opcional_string_lower = opcional_string.lower()
+        start_index = result['pag_final'] - 1  # Convert to zero-based index (starting from pag_final)
+        for i in range(start_index, total_pages):
+            page = reader.pages[i]
+            text = page.extract_text()
+            if text:
+                text_lower = text.lower()
+                if opcional_string_lower in text_lower:
+                    result['opcional_string'] = i + 1  # Pages are 1-indexed
+                    # print(f"Found 'opcional_string' on page {i + 1}")
+                    break  # Stop searching once optional string is found
+
+    # print("Result:", result)
     return result
+
+import unicodedata
+import string
+
+
 
 
 # Função para substituir placeholders pelos valores correspondentes da lista 'campos_preencher'
