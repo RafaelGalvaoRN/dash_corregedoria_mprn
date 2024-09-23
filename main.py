@@ -373,7 +373,7 @@ with tab5:
 
                     ultimo_relatorio_correicao = extract_pdf(arquivo, [("pag_inicial",
                                                                         "RELATÓRIO DE CORREIÇÃO ORDINÁRIA DE MEMBRO E EM UNIDADE"),
-                                                                       ("pag_final", "(assinado eletronicamente)")])
+                                                                       ("pag_final", "Assinado eletronicamente por")])
 
                     comparativo_produtividade = extract_pdf(arquivo, [
                         ("pag_inicial", "TABELA 1 - MOVIMENTAÇÃO PROCESSUAL (JUDICIAL)"),
