@@ -12,7 +12,6 @@ from utils_membros import *
 from pypdf import PdfMerger
 
 
-
 def pdf_merger_files(lista: list, output_pdf='merged.pdf'):
     merger = PdfMerger()
 
@@ -334,10 +333,9 @@ with tab4:
                                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 with tab5:
-    cargo_do_candidato, membro, posicao_lista_antiguidade, ultima_correicao_ordinaria, orgao_ministerial_ultima_correicao= membros_menu()
+    cargo_do_candidato, membro, posicao_lista_antiguidade, ultima_correicao_ordinaria, orgao_ministerial_ultima_correicao = membros_menu()
 
     arquivos = membros_pdf_extract()
-
 
     if arquivos:
         if len(arquivos) < 4:
@@ -388,75 +386,67 @@ with tab5:
                 if "EXTRATO_MERECIMENTO BIZAGI".strip().lower() in pdf_filename:
                     qtd_paginas_anteriores = 2 + get_value_by_partial_key(qtd_pages_pdf_file, "dcog")
 
-
                     bizagi_ficha_15 = extract_pdf(arquivo, [
                         ("pag_inicial", "ficha 15"),
                         ("pag_final", "ficha 16")
                     ], first_search=False)
 
-
-
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 15",
-                                             f"fls. {bizagi_ficha_15['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {bizagi_ficha_15['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     bizagi_ficha_15_16 = extract_pdf(arquivo, [
                         ("pag_inicial", "ficha 15"),
                         ("pag_final", "ficha 16")
                     ], first_search=False)
 
-
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 15 e 16",
-                                             f"fls. {bizagi_ficha_15_16['pag_inicial'] + qtd_paginas_anteriores}-{bizagi_ficha_15_16['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {bizagi_ficha_15_16['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_3 = extract_pdf(arquivo, [
                         ("pag_inicial", "ficha 3"),
                         ("pag_final", "ficha 5")
                     ], first_search=True)
 
-
-
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 3",
-                                             f"fls. {ficha_3['pag_inicial'] + qtd_paginas_anteriores}-{ficha_3['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_3['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_6_bizagi = extract_pdf(arquivo, [
-                        ("pag_inicial",  r"ficha 6"),
-                        ("pag_final",  r"ficha 7")
+                        ("pag_inicial", r"ficha 6"),
+                        ("pag_final", r"ficha 7")
                     ], first_search=False)
 
                     # st.write("ficha_6_bizagi")
                     # st.write(ficha_6_bizagi)
 
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 6",
-                                             f"fls. {ficha_6_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_6_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_6_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_11_bizagi = extract_pdf(arquivo, [
-                        ("pag_inicial",  r"ficha 11"),
-                        ("pag_final",  r"ficha 12")
+                        ("pag_inicial", r"ficha 11"),
+                        ("pag_final", r"ficha 12")
                     ], first_search=False)
 
-
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 11",
-                                             f"fls. {ficha_11_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_11_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_11_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_12_bizagi = extract_pdf(arquivo, [
-                        ("pag_inicial",  r"ficha 12"),
-                        ("pag_final",  r"ficha 13")
+                        ("pag_inicial", r"ficha 12"),
+                        ("pag_final", r"ficha 13")
                     ], first_search=False)
 
                     # st.write("ficha_12_bizagi")
                     # st.write(ficha_12_bizagi)
 
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 12",
-                                             f"fls. {ficha_12_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_12_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_12_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_13_bizagi = extract_pdf(arquivo, [
                         ("pag_inicial", "FICHA 13"),
                         ("pag_final", "FICHA 14")
                     ], first_search=False)
 
-
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 13",
-                                             f"fls. {ficha_13_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_13_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_13_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_10_bizagi = extract_pdf(arquivo, [
                         ("pag_inicial", "FICHA 10"),
@@ -467,7 +457,7 @@ with tab5:
                     # st.write(ficha_10_bizagi)
 
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 10",
-                                             f"fls. {ficha_10_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_10_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_10_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
                     ficha_8_bizagi = extract_pdf(arquivo, [
                         ("pag_inicial", "FICHA 8"),
@@ -478,10 +468,9 @@ with tab5:
                     # st.write(ficha_8_bizagi)
 
                     campos_preencher.append((pdf_filename, "Bizagi - Ficha 8",
-                                             f"fls. {ficha_8_bizagi['pag_inicial'] + qtd_paginas_anteriores}-{ficha_8_bizagi['pag_final'] + qtd_paginas_anteriores}"))
+                                             f"fls. {ficha_8_bizagi['pag_inicial'] + qtd_paginas_anteriores}"))
 
-
-                    #extrato merececimento bizagi
+                    # extrato merececimento bizagi
 
                     extrato_merecimento_bizagi = (1, get_pages(arquivo))
 
@@ -489,14 +478,33 @@ with tab5:
                                              f"fls. {1 + qtd_paginas_anteriores}-{extrato_merecimento_bizagi[1] + qtd_paginas_anteriores}"))
 
                 if "certidão da dcog".strip().lower() in pdf_filename:
-                    certidao_dcog = extract_pdf(arquivo, [
-                        ("pag_inicial", "certidão"),
-                        ("pag_final", r"natal")
-                    ])
+
+
+                    certidao_dcog = {"pag_inicial": 1, "pag_final": get_pages(arquivo)}
 
                     # 1 somado decorrente do indice
                     campos_preencher.append((pdf_filename, "Certidão da Diretoria da Corregedoria-Geral",
                                              f"fls. {certidao_dcog['pag_inicial'] + 2}-{certidao_dcog['pag_final'] + 2}"))
+
+                if "comparativo promotorias".strip().lower() in pdf_filename:
+
+
+                    qtd_paginas_anteriores = 2 + get_value_by_partial_key(qtd_pages_pdf_file,
+                                                                          "dcog") + get_value_by_partial_key(
+                        qtd_pages_pdf_file, "bizagi") + get_value_by_partial_key(qtd_pages_pdf_file, "relatório de co")
+
+
+
+
+                    comparativo_promotorias = extract_pdf(arquivo, [
+                        ("pag_inicial", "Período Selecionado"),
+                        ("pag_final", r"TABELA 4 - ATIVIDADES")
+                    ], opcional_string="Total")
+
+                    # 1 somado decorrente do indice
+                    campos_preencher.append((pdf_filename, "Comparativo atualizado",
+                                             f"fls. {comparativo_promotorias['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_promotorias['pag_final'] + qtd_paginas_anteriores}"))
+
 
 
             if st.button("visualizar"):
@@ -523,40 +531,27 @@ with tab5:
                 # Substituindo os placeholders
                 dados_substituidos = substituir_placeholders(dados_fixos, campos_preencher)
 
-
                 # Convertendo os dados substituídos em um DataFrame
                 df_substituido = pd.DataFrame(dados_substituidos)
 
-                #excluindo colunas
-
-
+                # excluindo colunas
 
                 st.markdown("## 📋 INFORMAÇÕES DA CORREGEDORIA GERAL")
                 # Exibindo o segundo DataFrame sem índice e sem colunas já excluidas
                 st.table(df_substituido)
 
-
                 file_xlsx = append_to_excel_manually(df_membros, df_substituido, "tabela_informações_completa_manual")
 
                 gerador_indice_pdf(file_xlsx, "indice.pdf")
 
-
-                #ordenar arquivos e incluir indice na posicao 0
+                # ordenar arquivos e incluir indice na posicao 0
                 arquivos_ordenados = sorted(arquivos, key=lambda x: x.name)
 
                 files_mesclar = ["indice.pdf"] + arquivos_ordenados
 
-
-                #mesclar arquivos pdf
+                # mesclar arquivos pdf
                 merged_pdf_file = pdf_merger_files(files_mesclar, 'merged.pdf')
-
-
-
 
                 download_excel_pdf(file_xlsx, merged_pdf_file)
 
                 st.success("Concluído")
-
-
-
-

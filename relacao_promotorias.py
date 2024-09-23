@@ -270,7 +270,7 @@ dados_fixos = {
 
     'Localização das Informações': [
         '{{Último Relatório de Correição}}',
-        '{{Comparativo de Produtividade}}',
+        '{{Comparativo atualizado}}',
         '{{Bizagi - Ficha 15}}',
         '------',
         '{{Bizagi - Ficha 15 e 16}}',
