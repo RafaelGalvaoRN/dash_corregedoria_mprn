@@ -3,6 +3,9 @@ import streamlit as st
 
 def textos_documentacao():
 
+    st.write("😎 - 23/09/2024 - Inclusão da ABA 'Info Membros' que visa facilittar a feitura de relatório de correição dos membros, por meio de identificação das folhas onde os itens se encontram e elaboração de sumário síntese")
+
+
     st.write("😎 - 16/07/2024 - Inclusão da ABA 'Relatório CATE' que visa tratar concatenar tabelas do CATE e filtrar por promotoria")
 
 
