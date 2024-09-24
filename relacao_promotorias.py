@@ -242,7 +242,7 @@ dados_fixos = {
              ],
 
     'Informações': [
-        'Relatório de Correição',
+        'Último Relatório de Correição',
         'Comparativo atualizado',
         'Bizagi Ficha 15',
         'Drive CGMP-Resultados',
