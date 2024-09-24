@@ -232,7 +232,7 @@ dados_fixos = {
              'Segurança',
              'Participação em Mutirões e/ou Sessões do Júri',
              'Cursos de Formação Continuada',
-             'Cursos Oficiais Diversos dos de Formação Continuada e Cursos Reconhecidos de Aperfeiçoamento',
+             'Cursos Oficiais Diversos dos de Formação Continuada',
              'Cursos Reconhecidos de Aperfeiçoamento',
              'Aprimoramento - Doutorado',
              'Aprimoramento - Mestrado ',
