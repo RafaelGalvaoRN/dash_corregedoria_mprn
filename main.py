@@ -370,8 +370,8 @@ with tab5:
                         qtd_pages_pdf_file, "bizagi")
 
                     ultimo_relatorio_correicao = extract_pdf(arquivo, [("pag_inicial",
-                                                                        "RELATÓRIO DE CORREIÇÃO ORDINÁRIA DE MEMBRO E EM UNIDADE"),
-                                                                       ("pag_final", "Assinado eletronicamente por")])
+                                                                        "Dados Gerais"),
+                                                                       ("pag_final", "Assinado eletronicamente")])
 
                     comparativo_produtividade = extract_pdf(arquivo, [
                         ("pag_inicial", "TABELA 1 - MOVIMENTAÇÃO PROCESSUAL (JUDICIAL)"),
@@ -380,8 +380,15 @@ with tab5:
 
                     campos_preencher.append((pdf_filename, "Último Relatório de Correição",
                                              f"fls. {ultimo_relatorio_correicao['pag_inicial'] + qtd_paginas_anteriores}-{ultimo_relatorio_correicao['pag_final'] + qtd_paginas_anteriores}"))
-                    campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
-                                             f"fls. {comparativo_produtividade['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_produtividade['pag_final'] + qtd_paginas_anteriores}"))
+
+                    try:
+                        campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
+                                                 f"fls. {comparativo_produtividade['pag_inicial'] + qtd_paginas_anteriores}-{comparativo_produtividade['pag_final'] + qtd_paginas_anteriores}"))
+
+                    except TypeError:
+                        campos_preencher.append((pdf_filename, "Comparativo de Produtividade",
+                                                 f"fls. não localizado - não localizado"))
+
 
                 if "EXTRATO_MERECIMENTO BIZAGI".strip().lower() in pdf_filename:
                     qtd_paginas_anteriores = 2 + get_value_by_partial_key(qtd_pages_pdf_file, "dcog")
