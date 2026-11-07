@@ -32,7 +32,7 @@ st.set_page_config(page_title="APP - Corregedoria MPRN", page_icon="🗂️",
 
 st.title("APP - Corregedoria 🗂️ ")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Documentação", "Tratador Específico c/ Gráficos",
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Como usar", "Tratador Específico c/ Gráficos",
                                         "Tratador Múltiplo e Geral", "Relatório Cate", "Info Membros"])
 
 with tab1:
@@ -44,17 +44,32 @@ with tab2:
              \nExtra sem impulsionamento.xlsx
              \nIPs sem Impulsionamento.xlsx
              \nJudi com vista.xlsx
-             \nRelatório FinalJ - NF - PP.xlsx
+             \nRelatório ExtraJ - NF -PP.xlsx
              \n Caso enviado mais de um arquivo do mesmo tipo, as tabelas serão agrupadas                      
              """)
 
-    uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab2")
+    uploaded_files = st.file_uploader("Escolha o arquivo", type=["xlsx"], accept_multiple_files=True, key="tab2")
+
+    tipos_tab2 = ["extra sem impulsionamento", "judi com vista", "relatório extraj", "ips sem impulsionamento"]
+
+    if uploaded_files:
+        tipos_enviados = {arquivo.name: next((t for t in tipos_tab2 if t in arquivo.name.lower()), None)
+                          for arquivo in uploaded_files}
+        nao_reconhecidos = [nome for nome, tipo in tipos_enviados.items() if tipo is None]
+
+        if nao_reconhecidos:
+            st.error("Nome de arquivo não reconhecido: " + ", ".join(nao_reconhecidos) +
+                     ". Confira os nomes aceitos na aba 'Como usar'.")
+            uploaded_files = None
+        elif len(set(tipos_enviados.values())) > 1:
+            st.error("Nesta aba, envie arquivos de um único tipo por vez. "
+                     "Para tipos diferentes juntos, use a aba 'Tratador Múltiplo e Geral'.")
+            uploaded_files = None
 
     if uploaded_files:
         seletor = uploaded_files[0].name.lower()
 
-        for processo in uploaded_files:
-            lista_dfs = [extract_normalize(processo) for processo in uploaded_files]
+        lista_dfs = [extract_normalize(processo) for processo in uploaded_files]
 
         if "extra sem impulsionamento" in seletor:
             lista_df_tratado = [remove_to_classe(processo) for processo in lista_dfs]
@@ -98,125 +113,126 @@ with tab2:
             lista_df_tratado = [apply_pipeline(df, functions) for df in lista_dfs]
             df_merged = pd.concat(lista_df_tratado, axis=0, join="outer", ignore_index=True)
 
-        show_result = st.checkbox("Show Result", value=True)
+        st.header("Tabela Consolidada 📊")
+        st.dataframe(df_merged)
 
-        if show_result:
+        if "extra sem impulsionamento" in seletor:
+            st.header("Tabela Filtrada - extra fora do prazo - sem NF e PP 📊")
+
+            with st.expander("Clique aqui para mais informações sobre os critérios:"):
+                st.markdown("""
+                  - **Exclusões:** Foram excluídos da tabela os itens 'NF' e 'PP', uma vez que a pesquisa no EMP já traz os extras sem impulsionamento.
+                  - **Inclusão:** Foi incluído o 'Número de Ordem'.
+                  - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número de Instauração', 'Prazo Legal'.
+                  """)
+
+            colunas = ["classe", "número", "prazo legal"]
+            functions = [exclude_specific_classes, extract_last_date,
+                         lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
+            df_filtrado = apply_pipeline(df_merged, functions)
+
+            st.dataframe(df_filtrado)
+
+            st.markdown("---")
+
+            functions = [exclude_specific_classes, extract_last_date]
+            df_filtrado_grafico = apply_pipeline(df_merged, functions)
+            grafico_procedimento_prazos_ultimo_impulsionamento(df_filtrado_grafico)
+
+            st.markdown("---")
+            download_table(df_filtrado)
+
+        elif "judi com vista" in seletor:
+            st.header("Tabela Filtrada - Judiciais com mais de 60 dias 📊")
+            st.write(
+                "Foram excluidos da tabela enviada os Inquéritos Policiais e os processos com menos de 60 dias!")
+
+            colunas = ['procedimento', 'classe', 'assunto', 'data registro', 'dias andamento']
+            functions = [normalize_columns, filter_df_by_criteria, lambda df: gerar_dataframe_filtrado(df, colunas),
+                         title_case_column]
+
+            df_filtrado = apply_pipeline(df_merged, functions)
+
+            st.dataframe(df_filtrado)
+
+            st.markdown("---")
+            grafico_pizza_judiciais(df_filtrado)
+            st.markdown("---")
+            download_table(df_filtrado)
+
+
+        elif "relatório extraj" in seletor:
+            st.header("Tabela Filtrada NF | PP fora do prazo 📊")
+
+            with st.expander("Clique aqui para mais informações sobre os critérios:"):
+                st.markdown("""                                    
+                                 - **Inclusão:** Foi incluído o 'Número de Ordem'.
+                                 - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número', 'Instauração', '30 dias', '120 dias', 'DENTRO/FORA', 'DIAS/FORA' .
+                                 """)
+
+            colunas_corrigir_formato = ['instauração', '30 dias', '120 dias']
+
+            functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf,
+                         lambda df: convert_collum_date(df, colunas_corrigir_formato), title_case_column]
+
+            df_filtrado = apply_pipeline(df_merged, functions)
+            st.dataframe(df_filtrado)
+
+            st.markdown("---")
+
+            functions = [nf_pp_fora_prazo]
+            df_filtrado_grafico = apply_pipeline(df_merged, functions)
+
+            grafico_procedimento_prazos(df_filtrado_grafico)
+
+            st.markdown("---")
+            download_table(df_filtrado)
+
+        elif "ips sem impulsionamento" in seletor:
             st.header("Tabela Consolidada 📊")
-            st.dataframe(df_merged)
+            st.write(
+                "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
 
-            if "extra sem impulsionamento" in seletor:
-                st.header("Tabela Filtrada - extra fora do prazo - sem NF e PP 📊")
+            colunas = ['classe', 'número', 'assunto']
+            functions = [lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
+            df_filtrado = apply_pipeline(df_merged, functions)
+            st.dataframe(df_filtrado)
 
-                with st.expander("Clique aqui para mais informações sobre os critérios:"):
-                    st.markdown("""
-                      - **Exclusões:** Foram excluídos da tabela os itens 'NF' e 'PP', uma vez que a pesquisa no EMP já traz os extras sem impulsionamento.
-                      - **Inclusão:** Foi incluído o 'Número de Ordem'.
-                      - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número de Instauração', 'Prazo Legal'.
-                      """)
+            st.markdown("---")
+            plot_instauracao_per_month(df_merged)
+            st.markdown("---")
 
-                colunas = ["classe", "número", "prazo legal"]
-                functions = [exclude_specific_classes, extract_last_date,
-                             lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
-                df_filtrado = apply_pipeline(df_merged, functions)
+            plot_ultimo_impulsionamento_per_month(df_merged)
+            st.markdown("---")
+            totalize_and_plot_by_subject(df_merged)
 
-                st.dataframe(df_filtrado)
-
-                st.markdown("---")
-
-                functions = [exclude_specific_classes, extract_last_date]
-                df_filtrado_grafico = apply_pipeline(df_merged, functions)
-                grafico_procedimento_prazos_ultimo_impulsionamento(df_filtrado_grafico)
-
-                st.markdown("---")
-                download_table(df_filtrado)
-
-            elif "judi com vista" in seletor:
-                st.header("Tabela Filtrada - Judiciais com mais de 60 dias 📊")
-                st.write(
-                    "Foram excluidos da tabela enviada os Inquéritos Policiais e os processos com menos de 60 dias!")
-
-                colunas = ['procedimento', 'classe', 'assunto', 'data registro', 'dias andamento']
-                functions = [normalize_columns, filter_df_by_criteria, lambda df: gerar_dataframe_filtrado(df, colunas),
-                             title_case_column]
-
-                df_filtrado = apply_pipeline(df_merged, functions)
-
-                st.dataframe(df_filtrado)
-
-                st.markdown("---")
-                grafico_pizza_judiciais(df_filtrado)
-                st.markdown("---")
-                download_table(df_filtrado)
-
-
-            elif "relatório extraj" in seletor:
-                st.header("Tabela Filtrada NF | PP fora do prazo 📊")
-
-                with st.expander("Clique aqui para mais informações sobre os critérios:"):
-                    st.markdown("""                                    
-                                     - **Inclusão:** Foi incluído o 'Número de Ordem'.
-                                     - **Filtragem:** A tabela foi filtrada para mostrar apenas 'Ordem', 'Número', 'Instauração', '30 dias', '120 dias', 'DENTRO/FORA', 'DIAS/FORA' .
-                                     """)
-
-                colunas_corrigir_formato = ['instauração', '30 dias', '120 dias']
-
-                functions = [nf_pp_fora_prazo, gerar_dataframe_filtrado_extra_nf,
-                             lambda df: convert_collum_date(df, colunas_corrigir_formato), title_case_column]
-
-                df_filtrado = apply_pipeline(df_merged, functions)
-                st.dataframe(df_filtrado)
-
-                st.markdown("---")
-
-                functions = [nf_pp_fora_prazo]
-                df_filtrado_grafico = apply_pipeline(df_merged, functions)
-
-                grafico_procedimento_prazos(df_filtrado_grafico)
-
-                st.markdown("---")
-                download_table(df_filtrado)
-
-            elif "ips sem impulsionamento" in seletor:
-                st.header("Tabela Consolidada 📊")
-                st.write(
-                    "Foram agrupados todos os arquivos que contém processos policiais sem impulsionamento além do prazo legal!")
-
-                colunas = ['classe', 'número', 'assunto']
-                functions = [lambda df: gerar_dataframe_filtrado(df, colunas), title_case_column]
-                df_filtrado = apply_pipeline(df_merged, functions)
-                st.dataframe(df_filtrado)
-
-                st.markdown("---")
-                plot_instauracao_per_month(df_merged)
-                st.markdown("---")
-
-                plot_ultimo_impulsionamento_per_month(df_merged)
-                st.markdown("---")
-                totalize_and_plot_by_subject(df_merged)
-
-                st.markdown("---")
-                download_table(df_filtrado)
+            st.markdown("---")
+            download_table(df_filtrado)
 
 with tab3:
     st.caption("""
                  Com este aplicativo, você será capaz de enviar múltiplos arquivos sendo eles tratados e disponibilizados zipados ao final através do botão Download  
                  """)
 
-    promotoria_selecionada = st.selectbox("Escolha uma promotoria", promotoria)
+    promotoria_selecionada = st.selectbox("Escolha uma promotoria", promotoria, index=None,
+                                          placeholder="Selecione a promotoria")
 
     col1, col2 = st.columns(2)
 
     with col1:
         qtd_acervo_extra = st.number_input("Quantidade de acervo extrajudicial", min_value=0, step=1,
-                                           help="Quantidade acervo judicial para cálculo de produtividade")
+                                           help="Quantidade de acervo extrajudicial, usada no cálculo do índice de atraso extrajudicial")
 
     with col2:
         qtd_acervo_jud = st.number_input("Quantidade de acervo judicial", min_value=0, step=1,
-                                         help="Quantidade acervo extrajudicial para cálculo de produtividade")
+                                         help="Quantidade de acervo judicial, incluindo os IPs, usada no cálculo do índice de atraso judicial")
 
     uploaded_files = st.file_uploader("Escolha o arquivo", accept_multiple_files=True, key="tab3.1")
 
-    if uploaded_files:
+    if uploaded_files and not promotoria_selecionada:
+        st.warning("Selecione a promotoria para gerar o relatório.")
+
+    elif uploaded_files:
         dfs = []
         nomes = []
 
@@ -300,6 +316,20 @@ with tab3:
 
             st.write("Finalizado tratamento do arquivo", nome_arquivo)
 
+        # Conferência do acervo informado antes de gerar o relatório
+        resumo_passivo = calcular_passivos(dfs, nomes)
+        for chave, rotulo, acervo in [("extra", "extrajudicial", qtd_acervo_extra),
+                                      ("jud", "judicial", qtd_acervo_jud)]:
+            if not resumo_passivo[chave]["enviado"]:
+                continue
+            passivo = resumo_passivo[chave]["passivo"]
+            if acervo == 0:
+                st.warning(f"⚠️ Informe a quantidade de acervo {rotulo}. Sem ela, o índice de atraso {rotulo} "
+                           f"sairá como 'Acervo não informado' no PDF.")
+            elif passivo > acervo:
+                st.warning(f"⚠️ O passivo {rotulo} ({passivo}) é maior que o acervo {rotulo} informado ({acervo}), "
+                           f"o que dá um índice acima de 100%. Confira o acervo.")
+
         pdf_path = gerador_relatorio_pdf(dfs,
                                          nomes,
                                          promotoria=promotoria_selecionada,
@@ -338,10 +368,10 @@ with tab5:
     arquivos = membros_pdf_extract()
 
     if arquivos:
-        if len(arquivos) < 4:
-            st.error("Necessário colocar ao menos 4 arquivos em pdf")
+        # checklist dos 4 documentos; devolve os arquivos já na ordem do PDF final
+        arquivos = conferir_documentos_membros(arquivos)
 
-        elif len(arquivos) >= 4:
+        if arquivos:
             campos_preencher = []
 
             qtd_pages_pdf_file = {}
@@ -551,8 +581,8 @@ with tab5:
 
                 gerador_indice_pdf(file_xlsx, "indice.pdf")
 
-                # ordenar arquivos e incluir indice na posicao 0
-                arquivos_ordenados = sorted(arquivos, key=lambda x: x.name)
+                # arquivos já estão na ordem esperada (DOCUMENTOS_MEMBROS); índice entra na posição 0
+                arquivos_ordenados = arquivos
 
                 files_mesclar = ["indice.pdf"] + arquivos_ordenados
 

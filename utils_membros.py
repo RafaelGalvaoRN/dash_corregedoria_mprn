@@ -428,3 +428,58 @@ def download_excel_pdf(file_xlsx, merged_pdf_file):
         file_name="arquivos.zip",
         mime="application/zip"
     )
+
+
+# Documentos esperados na aba Info Membros, NA ORDEM em que entram no PDF final.
+# O cálculo das folhas do índice depende dessa ordem.
+DOCUMENTOS_MEMBROS = [
+    ("certidão da dcog", "Certidão da DCOG"),
+    ("extrato_merecimento bizagi", "Extrato de Merecimento (Bizagi)"),
+    ("relatório de co", "Relatório de Correição Ordinária"),
+    ("comparativo promotorias", "Comparativo Promotorias"),
+]
+
+
+def identificar_documento_membro(nome_arquivo):
+    """Retorna a posição do documento em DOCUMENTOS_MEMBROS, ou None se o nome não for reconhecido."""
+    nome = nome_arquivo.lower().strip()
+    for posicao, (trecho, _) in enumerate(DOCUMENTOS_MEMBROS):
+        if trecho in nome:
+            return posicao
+    return None
+
+
+def conferir_documentos_membros(arquivos):
+    """
+    Mostra o checklist dos documentos esperados e devolve a lista de arquivos na ordem
+    correta, ou None se faltar algum documento.
+    """
+    reconhecidos, nao_reconhecidos, repetidos = {}, [], []
+    for arquivo in arquivos:
+        posicao = identificar_documento_membro(arquivo.name)
+        if posicao is None:
+            nao_reconhecidos.append(arquivo.name)
+        elif posicao in reconhecidos:
+            repetidos.append(arquivo.name)
+        else:
+            reconhecidos[posicao] = arquivo
+
+    st.markdown("**Documentos esperados**")
+    for posicao, (_, rotulo) in enumerate(DOCUMENTOS_MEMBROS):
+        if posicao in reconhecidos:
+            st.markdown(f"✅ {posicao + 1}. {rotulo} — `{reconhecidos[posicao].name}`")
+        else:
+            st.markdown(f"❌ {posicao + 1}. {rotulo} — não encontrado")
+
+    if nao_reconhecidos:
+        st.warning("Arquivos não reconhecidos (confira o nome): " + ", ".join(nao_reconhecidos))
+    if repetidos:
+        st.warning("Arquivos repetidos, foram ignorados: " + ", ".join(repetidos))
+
+    if len(reconhecidos) < len(DOCUMENTOS_MEMBROS):
+        st.error("Envie os 4 documentos acima. O nome de cada arquivo precisa conter o trecho indicado "
+                 "(ex.: \"Certidão da DCOG\", \"EXTRATO_MERECIMENTO BIZAGI\", \"Relatório de CO\", "
+                 "\"Comparativo Promotorias\").")
+        return None
+
+    return [reconhecidos[posicao] for posicao in range(len(DOCUMENTOS_MEMBROS))]

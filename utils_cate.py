@@ -1,3 +1,4 @@
+from utils_datas import converter_datas_br
 import pandas as pd
 import streamlit as st
 from io import BytesIO
@@ -17,14 +18,15 @@ def plotar_solicitacoes_por_unidade(df, qtd):
     contagem_unidades = df['Unidade Solicitante'].value_counts().head(qtd)
 
     # Criando o gráfico de barras
-    plt.figure(figsize=(10, 6))  # Ajusta o tamanho do gráfico
+    fig = plt.figure(figsize=(10, 6))  # Ajusta o tamanho do gráfico
     contagem_unidades.plot(kind='bar', color='skyblue')  # Plota um gráfico de barras
     plt.title(f'Top {qtd} Unidades Solicitantes por Quantidade de Solicitações')  # Título do gráfico
     plt.xlabel('Unidade Solicitante')  # Rótulo do eixo X
     plt.ylabel('Quantidade de Solicitações')  # Rótulo do eixo Y
     plt.xticks(rotation=45, ha='right')  # Rotaciona os rótulos do eixo X para melhor visualização
     plt.tight_layout()  # Ajusta layout para não cortar informações
-    st.pyplot(plt)
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura
 
 
 
@@ -76,7 +78,7 @@ def converter_colunas_para_datetime(df, lista_colunas):
     for coluna in lista_colunas:
         # Verifica se a coluna existe no DataFrame
         if coluna in df.columns:
-            df[coluna] = pd.to_datetime(df[coluna], errors='coerce').dt.strftime('%d/%m/%Y')
+            df[coluna] = converter_datas_br(df[coluna]).dt.strftime('%d/%m/%Y')
         else:
             raise ValueError(f"A coluna '{coluna}' não existe no DataFrame.")
 

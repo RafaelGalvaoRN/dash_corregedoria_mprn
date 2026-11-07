@@ -1,3 +1,4 @@
+from utils_datas import converter_datas_br
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -7,7 +8,7 @@ import seaborn as sns
 def plot_instauracao_per_month(df):
 
     # Converter a coluna 'Instauração' para datetime
-    df['instauração'] = pd.to_datetime(df['instauração'], errors='coerce')
+    df['instauração'] = converter_datas_br(df['instauração'])
 
 
     # Extrair ano e mês da coluna 'Instauração'
@@ -20,7 +21,7 @@ def plot_instauracao_per_month(df):
 
 
     # Criar o gráfico de barras
-    plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 6))
     count_per_month.plot(kind='bar', color='skyblue')
     plt.title('Quantidade de Processos Ativos por Ano / Mês de Instauração')
     plt.xlabel('Ano e Mês')
@@ -32,13 +33,14 @@ def plot_instauracao_per_month(df):
 
 
 
-    st.pyplot(plt.gcf())
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura
 
 
 def plot_ultimo_impulsionamento_per_month(df):
     try:
         # Converter a coluna 'Instauração' para datetime
-        df['data do último impulsionamento'] = pd.to_datetime(df['data do último impulsionamento'], errors='coerce')
+        df['data do último impulsionamento'] = converter_datas_br(df['data do último impulsionamento'])
 
         # Extrair ano e mês da coluna 'Instauração'
         df['YearMonth'] = df['data do último impulsionamento'].dt.to_period('M')
@@ -54,7 +56,7 @@ def plot_ultimo_impulsionamento_per_month(df):
             return  # Saída precoce se não houver dados para plotar
 
         # Criar o gráfico de barras
-        plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(10, 6))
         count_per_month.plot(kind='bar', color='skyblue')
         plt.title('Quantidade de Processos Ativos por Ano / Mês do Último Impulsionamento')
         plt.xlabel('Ano e Mês')
@@ -63,7 +65,8 @@ def plot_ultimo_impulsionamento_per_month(df):
         plt.tight_layout()
 
         # Mostrar o gráfico no Streamlit
-        st.pyplot(plt.gcf())
+        st.pyplot(fig)
+        plt.close(fig)  # libera a memória da figura
 
     except Exception as e:
         st.error(f"Ocorreu um erro ao tentar gerar o gráfico: {e}")
@@ -74,7 +77,7 @@ def totalize_and_plot_by_subject(df):
     subject_counts = df['assunto'].value_counts()
 
     # Criar o gráfico de barras para os totais por assunto
-    plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 8))
     subject_counts.plot(kind='bar', color='cadetblue')
     plt.title('Total de Processos por Assunto')
     plt.xlabel('Assunto')
@@ -83,7 +86,8 @@ def totalize_and_plot_by_subject(df):
     plt.tight_layout()
 
     # Mostrar o gráfico na interface Streamlit
-    st.pyplot(plt.gcf())
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura
 
 
 def grafico_procedimento_prazos(df):
@@ -98,7 +102,7 @@ def grafico_procedimento_prazos(df):
     df['Intervalo Dias Fora'] = pd.cut(df['dias fora'], bins=bins, labels=labels, right=False)
 
     # Criando o gráfico
-    plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(10, 6))
     sns.countplot(data=df, x='Intervalo Dias Fora', hue='classe')
     plt.title('Distribuição de Processos por Dias Fora do Prazo e Classe')
     plt.xlabel('Dias Fora do Prazo')
@@ -106,12 +110,13 @@ def grafico_procedimento_prazos(df):
     plt.legend(title='Classe')
 
     # Mostrando o gráfico no Streamlit
-    st.pyplot(plt)
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura
 
 
 def grafico_procedimento_prazos_ultimo_impulsionamento(df):
     # Converter 'Last Date' para datetime
-    df['data do último impulsionamento'] = pd.to_datetime(df['data do último impulsionamento'], errors='coerce')
+    df['data do último impulsionamento'] = converter_datas_br(df['data do último impulsionamento'])
 
     # Criar coluna de mês/ano
     df['Month-Year'] = df['data do último impulsionamento'].dt.to_period('M')
@@ -120,7 +125,7 @@ def grafico_procedimento_prazos_ultimo_impulsionamento(df):
     grouped = df.groupby(['Month-Year', 'classe']).size().reset_index(name='Count')
 
     # Preparar os dados para o gráfico
-    plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 8))
     sns.barplot(data=grouped, x='Month-Year', y='Count', hue='classe')
     plt.title('Distribuição de Processos por Mês/Ano do Último Impulsionamento e Classe do Procedimento')
     plt.xlabel('Ano/Mês')
@@ -130,7 +135,8 @@ def grafico_procedimento_prazos_ultimo_impulsionamento(df):
     plt.tight_layout()
 
     # Mostrando o gráfico no Streamlit
-    st.pyplot(plt)
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura
 
 
 def grafico_pizza_judiciais(df):
@@ -145,9 +151,10 @@ def grafico_pizza_judiciais(df):
 
         return my_format
 
-    plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(8, 8))
     plt.pie(counts, labels=counts.index, autopct=autopct_format(counts), startangle=90)
     plt.title("Distribuição de Procedimentos Judiciais com mais de 60 dias por Classe")
     plt.axis('equal')  # Ensure that pie is drawn as a circle.
 
-    st.pyplot(plt)
+    st.pyplot(fig)
+    plt.close(fig)  # libera a memória da figura

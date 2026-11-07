@@ -1,3 +1,4 @@
+from utils_datas import converter_datas_br
 import pandas as pd
 import io
 import streamlit as st
@@ -10,10 +11,10 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 def convert_collum_date(df, colunas):
     for coluna in colunas:
-        df[coluna] = pd.to_datetime(df[coluna], errors='coerce')
+        df[coluna] = converter_datas_br(df[coluna])
 
         # Após a conversão, você pode então formatar essas colunas como desejar
-        df[coluna] = df[coluna].dt.strftime('%d-%m-%Y')
+        df[coluna] = df[coluna].dt.strftime('%d/%m/%Y')
 
     return df
 
@@ -255,6 +256,9 @@ def exclude_specific_classes(df):
 
 
 def filter_df_by_criteria(df):
+    # Layout novo do EMP traz "Nº Processo" no lugar de "Procedimento"
+    df = df.rename(columns={'nº processo': 'procedimento'})
+
     # Excluir entradas onde 'Classe' é 'Inquérito Policial'
     df = df[df['classe'] != 'Inquérito Policial']
 
