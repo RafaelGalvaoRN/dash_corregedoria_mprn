@@ -6,6 +6,7 @@ import seaborn as sns
 
 
 def plot_instauracao_per_month(df):
+    df = df.copy()  # o gráfico não altera a tabela recebida
 
     # Converter a coluna 'Instauração' para datetime
     df['instauração'] = converter_datas_br(df['instauração'])
@@ -38,6 +39,7 @@ def plot_instauracao_per_month(df):
 
 
 def plot_ultimo_impulsionamento_per_month(df):
+    df = df.copy()  # o gráfico não altera a tabela recebida
     try:
         # Converter a coluna 'Instauração' para datetime
         df['data do último impulsionamento'] = converter_datas_br(df['data do último impulsionamento'])
@@ -91,6 +93,7 @@ def totalize_and_plot_by_subject(df):
 
 
 def grafico_procedimento_prazos(df):
+    df = df.copy()  # o gráfico não altera a tabela recebida
     # Definindo os intervalos de dias fora do prazo
     bins = [0, 30, 60, 90, 120, float('inf')]
     labels = ['0-30', '31-60', '61-90', '91-120', '121+']
@@ -115,6 +118,7 @@ def grafico_procedimento_prazos(df):
 
 
 def grafico_procedimento_prazos_ultimo_impulsionamento(df):
+    df = df.copy()  # o gráfico não altera a tabela recebida
     # Converter 'Last Date' para datetime
     df['data do último impulsionamento'] = converter_datas_br(df['data do último impulsionamento'])
 

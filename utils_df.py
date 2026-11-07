@@ -66,6 +66,7 @@ def remove_empty_rows(df):
 
 def normalize_column_types(df):
     # Converte todas as colunas para string para evitar problemas de tipo
+    df = df.copy()  # trabalha numa cópia (evita SettingWithCopyWarning)
     for col in df.columns:
         df[col] = df[col].astype(str)
 
@@ -142,7 +143,7 @@ def select_nf_pp_data_in_df(df, column_index=0):
 
     # Filtrar o DataFrame pela coluna especificada, mantendo linhas cujo valor inicie com um dos prefixos válidos
     filtered_df = df[
-        df.iloc[:, column_index].apply(lambda x: any(x.startswith(prefix) for prefix in valid_starts if pd.notna(x)))]
+        df.iloc[:, column_index].apply(lambda x: any(x.startswith(prefix) for prefix in valid_starts if pd.notna(x)))].copy()
 
     # exclue algumas colunas, em branco
     filtered_df.drop(filtered_df.columns[[1, 2, 4, 6,
@@ -177,7 +178,7 @@ def remove_to_classe(df):
         # Defina a linha correspondente ao 'classe_index' como os novos nomes das colunas
         df.columns = df.iloc[classe_index]
         # Elimine as linhas até e incluindo o índice da 'Classe'
-        df = df.iloc[classe_index + 1:]  # Comece do próximo após 'Classe'
+        df = df.iloc[classe_index + 1:].copy()  # Comece do próximo após 'Classe'
     return df
 
 
@@ -188,6 +189,7 @@ def filtrar_fora_prazo(df, procedimento, prazo_maximo):
 
 
 def extract_last_date(df):
+    df = df.copy()  # não altera a tabela recebida
     # Converter todos os nomes de coluna para minúsculas
     df.columns = [col.lower() for col in df.columns]
 
@@ -200,7 +202,7 @@ def extract_last_date(df):
 
 def nf_pp_fora_prazo(df):
     # Filtra onde o procedimento é 'NF' e os dias estão acima do prazo máximo
-    df_filtrado = df[(df['dentro /fora'] == "F")]
+    df_filtrado = df[(df['dentro /fora'] == "F")].copy()
     return df_filtrado
 
 
@@ -211,7 +213,8 @@ def gerar_dataframe_filtrado(df, colunas):
     # Adiciona uma nova coluna 'Número de Ordem' que contém o índice + 1 (para começar de 1 em vez de 0)
     df_resultado['Número de Ordem'] = range(1, len(df_resultado) + 1)
 
-    colunas.insert(0, "Número de Ordem")
+    # cria uma nova lista em vez de alterar a recebida (antes o insert modificava a lista do chamador)
+    colunas = ["Número de Ordem"] + list(colunas)
 
     # Reordena as colunas para colocar 'Número de Ordem' como a primeira coluna
     df_resultado = df_resultado[colunas]
@@ -260,7 +263,7 @@ def filter_df_by_criteria(df):
     df = df.rename(columns={'nº processo': 'procedimento'})
 
     # Excluir entradas onde 'Classe' é 'Inquérito Policial'
-    df = df[df['classe'] != 'Inquérito Policial']
+    df = df[df['classe'] != 'Inquérito Policial'].copy()
 
     # Converter 'Dias Andamento' para int antes de filtrar
     # Usar pd.to_numeric para conversão segura, convertendo erros em NaN (que serão filtrados fora)
@@ -273,7 +276,7 @@ def filter_df_by_criteria(df):
 
 
 def filter_df_by_ip(df):
-    df = df[df['classe'] == "Inquérito Policial"]
+    df = df[df['classe'] == "Inquérito Policial"].copy()
     return df
 
 
